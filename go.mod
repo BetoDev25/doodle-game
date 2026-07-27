@@ -1,0 +1,3 @@
+module drawing-game
+
+go 1.26.2
