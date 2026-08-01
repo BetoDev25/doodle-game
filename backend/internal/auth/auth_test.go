@@ -1,5 +1,4 @@
 package auth
-package auth
 
 import (
 	"testing"
@@ -18,20 +17,20 @@ func TestMakeJWT(t *testing.T) {
 		wantErr     bool
 	}{
 		{
-			Name:   "Make test 1",
-			UserID: uuid.New(),
+			Name:        "Make test 1",
+			UserID:      uuid.New(),
 			tokenSecret: "applepie",
-			expiresIn: time.Hour,
-			wantToken: "",
-			wantErr: false,
+			expiresIn:   time.Hour,
+			wantToken:   "",
+			wantErr:     false,
 		},
 		{
-			Name:   "Make test 2",
-			UserID: uuid.New(),
+			Name:        "Make test 2",
+			UserID:      uuid.New(),
 			tokenSecret: "mayonnaise",
-			expiresIn: time.Second,
-			wantToken: "",
-			wantErr: false,
+			expiresIn:   time.Second,
+			wantToken:   "",
+			wantErr:     false,
 		},
 	}
 	for _, tt := range testsMake {
@@ -66,7 +65,7 @@ func TestValidateJWT(t *testing.T) {
 		wantErr     bool
 	}{
 		{
-			Name: "Validate test 1",
+			Name:        "Validate test 1",
 			tokenString: validTokenString,
 			tokenSecret: testSecret,
 			wantUserID:  testUserID,

@@ -2,15 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
-	"os"
 	"time"
 
+	"github.com/BetoDev25/doodle-game/backend/config"
 	"github.com/BetoDev25/doodle-game/backend/internal/auth"
+	"github.com/BetoDev25/doodle-game/backend/internal/cookies"
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
 )
 
-func HandlerLoginUser(w http.ResponseWriter, r *http.Request, db *database.Queries) {
+func HandlerLoginUser(w http.ResponseWriter, r *http.Request, db *database.Queries, cfg config.Config) {
 	type params struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
@@ -31,26 +33,50 @@ func HandlerLoginUser(w http.ResponseWriter, r *http.Request, db *database.Queri
 	}
 
 	// Check password
-	match, err := auth.CheckPasswordHash(input.Password, user.PasswordHash)
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error checking password", err)
-		return
-	}
-	if !match {
+	isValid, err := auth.CheckPasswordHash(input.Password, user.PasswordHash)
+	if err != nil || !isValid {
 		RespondWithError(w, http.StatusUnauthorized, "Invalid username or password", nil)
 		return
 	}
 
-	// Generate JWT
-	secret := os.Getenv("JWT_SECRET")
-	token, err := auth.MakeJWT(user.ID, secret, 24*time.Hour)
+	token := auth.GenerateSessionToken()
+	session, err := db.CreateSession(r.Context(), database.CreateSessionParams{
+		Token:     token,
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(8 * time.Hour),
+	})
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error creating session", err)
+		RespondWithError(w, http.StatusInternalServerError, "Couldn't create session", err)
 		return
 	}
 
-	// Return token
+	maxAge := int(time.Until(session.ExpiresAt).Seconds())
+	if maxAge <= 0 {
+		maxAge = 60
+	}
+
+	//Secure session cookie
+	sessionCookie := &http.Cookie{
+		Name:     "session_token",
+		Value:    token,
+		Path:     "/",
+		Expires:  session.ExpiresAt,
+		MaxAge:   maxAge,
+		HttpOnly: true,
+		Domain:   cfg.CookieDomain,
+		Secure:   cfg.CookieSecure,
+		SameSite: cfg.CookieSameSite,
+	}
+	err = cookies.Write(w, *sessionCookie)
+	if err != nil {
+		log.Printf("Error setting cookie: %v", err)
+		RespondWithError(w, http.StatusInternalServerError, "server error", err)
+		return
+	}
+
+	// Return message
 	RespondWithJSON(w, http.StatusOK, map[string]string{
-		"token": token,
+		"username": user.Username,
+		"message":  "Login successful",
 	})
 }

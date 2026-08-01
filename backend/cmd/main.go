@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
 
@@ -11,18 +12,29 @@ import (
 )
 
 func main() {
-	apiCfg := handlers.SetupAPIConfig()
-	mux, server := config.SetupServer()
+	env := flag.String("env", "production", "Environment: development or production")
+	flag.Parse()
+	apiCfg := handlers.SetupAPIConfig(*env)
+	mux, server := config.SetupServer(*env)
+	config := config.SetupConfig(*env)
 	// Serve static files from the "static" directory
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	db := apiCfg.DB
+
+	// Root route - index.html
+	mux.HandleFunc("/", handlers.Middleware(db, func(w http.ResponseWriter, r *http.Request) {
+		http.FileServer(http.Dir("./static")).ServeHTTP(w, r)
+	}))
 
 	// API routes
 	mux.HandleFunc("POST /api/users", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerCreateUser(w, r, db)
 	})
 	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerLoginUser(w, r, db)
+		handlers.HandlerLoginUser(w, r, db, config)
+	})
+	mux.HandleFunc("GET /api/me", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerMe(w, r, db)
 	})
 
 	log.Println("Server starting on http://localhost:8080")

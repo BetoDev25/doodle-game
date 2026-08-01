@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"database/sql"
-	"flag"
 	"log"
 	"os"
 
@@ -17,11 +16,9 @@ type APIConfig struct {
 	JWTSecret string
 }
 
-func SetupAPIConfig() *APIConfig {
-	env := flag.String("env", "production", "Environment: development or production")
-	flag.Parse()
+func SetupAPIConfig(env string) *APIConfig {
 	var envFile string
-	if *env == "production" {
+	if env == "production" {
 		envFile = ".env.prod"
 	} else {
 		envFile = ".env.dev"

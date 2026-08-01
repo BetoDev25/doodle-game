@@ -1,7 +1,6 @@
 package config
 
 import (
-	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -12,17 +11,14 @@ import (
 
 type Config struct {
 	//Platform       string
-	//JWTSecret      string
 	CookieDomain   string
 	CookieSecure   bool
 	CookieSameSite http.SameSite
 }
 
-func SetupConfig() Config {
-	env := flag.String("env", "production", "Environment: development or production")
-	flag.Parse()
+func SetupConfig(env string) Config {
 	var envFile string
-	if *env == "production" {
+	if env == "production" {
 		envFile = ".env.prod"
 	} else {
 		envFile = ".env.dev"
@@ -63,7 +59,7 @@ func SetupConfig() Config {
 
 	return *config
 }
-func SetupServer() (*http.ServeMux, *http.Server) {
+func SetupServer(env string) (*http.ServeMux, *http.Server) {
 	mux := http.NewServeMux()
 	server := &http.Server{
 		Handler:      mux,

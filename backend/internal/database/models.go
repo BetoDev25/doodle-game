@@ -7,6 +7,7 @@ package database
 import (
 	"database/sql"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -29,6 +30,13 @@ type Match struct {
 	FinisherID uuid.UUID
 	CreatedAt  sql.NullTime
 	FinishedAt sql.NullTime
+}
+
+type Session struct {
+	Token     string
+	CreatedAt time.Time
+	UserID    uuid.UUID
+	ExpiresAt time.Time
 }
 
 type User struct {

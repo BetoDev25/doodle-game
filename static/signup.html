@@ -1,0 +1,125 @@
+<h1>Sign Up</h1>
+<input type="text" id="username" placeholder="username" oninput="validateUsername(this.value)">
+<div id="usernameError" style="color: red; font-size: 12px; margin-top: 5px; margin-bottom: 10px;"></div>
+
+<input type="password" id="password" placeholder="password" oninput="validatePassword(this.value)">
+<div id="passwordError" style="color: red; font-size: 12px; margin-top: 5px; margin-bottom: 10px;"></div>
+
+<input type="password" id="passwordDupe" placeholder="retype password" oninput="passwordEqual(this.value)">
+<div id="passwordDupeError" style="color: red; font-size: 12px; margin-top: 5px; margin-bottom: 10px;"></div>
+
+<button onclick="signUp()">Sign Up</button>
+<p style="margin-top: 10px;">
+    <a href="/login.html">log in instead</a>
+</p>
+<div id="message" style="margin-top: 20px; color: #333;"></div>
+
+<script>
+    localStorage.removeItem('lastRoom');
+    localStorage.removeItem('lastRoomData');
+    function passwordEqual(val) {
+        const val2 = document.getElementById("password").value
+        const errorDiv = document.getElementById("passwordDupeError")
+        if (val != val2) {
+            errorDiv.textContent = 'Passwords not equal';
+        } else {
+            errorDiv.textContent = '';
+        }
+    }
+    
+    function validateUsername(val) {
+        const errorDiv = document.getElementById("usernameError")
+        switch (true) {
+            case !val:
+                errorDiv.textContent = 'Username is required';
+                break;
+            case val.length < 4:
+                errorDiv.textContent = 'Username must be at least 4 characters';
+                break;
+            case val.length > 20:
+                errorDiv.textContent = 'Username cannot exceed 20 characters';
+                break;
+            case /\s/.test(val):
+                errorDiv.textContent = 'Username cannot contain spaces';
+                break;
+            default:
+                errorDiv.textContent = '';
+        }
+    }
+
+    function validatePassword(val) {
+        const errorDiv = document.getElementById("passwordError")
+        switch (true) {
+            case !val:
+                errorDiv.textContent = 'Password is required';
+                break;
+            case val.length < 8:
+                errorDiv.textContent = 'Password must be at least 8 characters';
+                break;
+            case val.length > 40:
+                errorDiv.textContent = 'Password cannot exceed 40 characters';
+                break;
+            case !/[0-9]/.test(val):
+                errorDiv.textContent = 'Password must contain at least one number';
+                break;
+            case /\s/.test(val):
+                errorDiv.textContent = 'Password cannot contain spaces';
+                break;
+            default:
+                errorDiv.textContent = '';
+        }
+    }
+    
+    async function signUp() {
+        const usernameVal = document.getElementById('username').value;
+        const passwordVal = document.getElementById('password').value;
+        const messageDiv = document.getElementById('message');
+        
+        const usernameError = document.getElementById('usernameError').textContent;
+        const passwordError = document.getElementById('passwordError').textContent;
+        const passwordDupeError = document.getElementById('passwordDupeError').textContent;
+
+        if (usernameError || passwordError || passwordDupeError) {
+            messageDiv.style.color = 'red';
+            messageDiv.textContent = 'Please fix all errors before submitting'
+            return;
+        }
+
+        if (!usernameVal || !passwordVal) {
+            messageDiv.style.color = 'red';
+            messageDiv.textContent = 'Please enter both username and password';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/users', {
+                method:'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: usernameVal,
+                    password: passwordVal
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                messageDiv.style.color = 'green';
+                messageDiv.textContent = `Success! User "${data.username}" created!`;
+                
+                // Load the next panel after successful signup
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 1000);
+            } else {
+                messageDiv.style.color = 'red';
+                messageDiv.textContent = data.error || 'Failed to create user';
+            }
+        } catch (error) {
+            messageDiv.style.color = 'red';
+            messageDiv.textContent = 'Error connecting to server';
+        }
+    }
+</script>
