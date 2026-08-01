@@ -12,8 +12,9 @@ import (
 )
 
 type APIConfig struct {
-	DB     *database.Queries
-	APIKey string
+	DB        *database.Queries
+	APIKey    string
+	JWTSecret string
 }
 
 func SetupAPIConfig() *APIConfig {

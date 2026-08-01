@@ -21,6 +21,9 @@ func main() {
 	mux.HandleFunc("POST /api/users", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerCreateUser(w, r, db)
 	})
+	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerLoginUser(w, r, db)
+	})
 
 	log.Println("Server starting on http://localhost:8080")
 	log.Fatal(server.ListenAndServe())
