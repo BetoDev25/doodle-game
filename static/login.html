@@ -15,6 +15,46 @@
 
 <script>
     async function login(event) {
-        
+        event.preventDefault();
+
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const messageDiv = document.getElementById('message');
+
+        if (!username || !password) {
+            messageDiv.style.color = 'red';
+            messageDiv.textContent = 'Please enter both username and password';
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  username: username,
+                  password: password  
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                messageDiv.style.color = 'green';
+                messageDiv.textContent = 'Login successful!';
+
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            } else {
+                messageDiv.style.color = 'red';
+                messageDiv.textContent = data.error || 'Login failed';
+            }
+        } catch (error) {
+            messageDiv.style.color = 'red';
+            messageDiv.textContent = 'Error connecting to server';
+        }
     }
 </script>

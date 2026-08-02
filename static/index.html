@@ -1,24 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doodle Duel</title>
+    <title>Doodle Duel - Drawing Tool</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css"
+          integrity="sha512-KfkfwYDsLkIlwQp6LFnl8zNdLGxu9YAA1QvwINks4PhcElQSvqcyVLLD9aMhXd13uQjoXtEKNosOWaZqXgel0g=="
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <script src="/js/drawing.js" defer></script>
 </head>
-<body>
-    <h1>Welcome</h1>
-</body>
-</html>
 
-<script>
-    document.addEventListener("DOMContentLoaded", async () => {
-        let currentUser = undefined;
-        const response = await fetch('/api/me');
-        if (response.ok) {
-            const user = await response.json();
-            currentUser = user;
-        } else {
-            window.location.href = "/login.html";
-        };
-    });
-</script>
+<body>
+<div class="container">
+    <!-- Drawing Canvas -->
+    <section class="drawing-board">
+        <canvas id="drawing-canvas"></canvas>
+    </section>
+
+    <!-- Controls Panel -->
+    <section class="controls-board">
+        <!-- Brush Sizes -->
+        <div class="row">
+            <label class="title"><strong>Brush Size</strong></label>
+            <ul class="options sizes">
+                <li class="option size-btn active" data-size="3">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="2" fill="#000" />
+                    </svg>
+                </li>
+                <li class="option size-btn" data-size="6">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="4" fill="#000" />
+                    </svg>
+                </li>
+                <li class="option size-btn" data-size="10">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="8" fill="#000" />
+                    </svg>
+                </li>
+                <li class="option size-btn" data-size="35">
+                    <svg width="24" height="24" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="12" fill="#000" />
+                    </svg>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Colors -->
+        <div class="row colors">
+            <label class="title"><strong>Colors</strong></label>
+            <ul class="options">
+                <li class="option selected" style="background-color: #000000;"></li>
+                <li class="option" style="background-color: #FF0000;"></li>
+                <li class="option" style="background-color: #0000FF;"></li>
+                <li class="option" style="background-color: #00FF00;"></li>
+                <li class="option" style="background-color: #FFA500;"></li>
+                <li class="option" style="background-color: #800080;"></li>
+            </ul>
+        </div>
+
+        <!-- Actions -->
+        <div class="row buttons">
+            <button class="clear-canvas">Clear Canvas</button>
+            <button class="save-img">Save Image</button>
+        </div>
+    </section>
+</div>
+</body>
+
+</html>

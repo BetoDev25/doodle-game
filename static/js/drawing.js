@@ -21,7 +21,6 @@ function resizeCanvas() {
 let isDrawing = false;
 let lastX = 0;
 let lastY = 0;
-let selectedTool = 'brush';
 let strokes = [];
 let currentStroke = [];
 let isInside = false;
@@ -78,8 +77,7 @@ function draw(e) {
             strokes.push({
                 points: currentStroke,
                 color: selectedColor,
-                size: brushSize,
-                tool: selectedTool
+                size: brushSize
             });
         }
         // Start a fresh stroke at the entry point
@@ -98,8 +96,7 @@ function draw(e) {
             strokes.push({
                 points: currentStroke,
                 color: selectedColor,
-                size: brushSize,
-                tool: selectedTool
+                size: brushSize
             });
         }
         currentStroke = [];
@@ -127,8 +124,7 @@ function endDraw(e) {
             strokes.push({
                 points: currentStroke,
                 color: selectedColor,
-                size: brushSize,
-                tool: selectedTool
+                size: brushSize
             });
         }
         currentStroke = [];
@@ -147,52 +143,27 @@ canvas.addEventListener('touchstart', startDraw, { passive: false });
 document.addEventListener('touchmove', draw, { passive: false });
 document.addEventListener('touchend', endDraw, { passive: false });
 
-// === Tool buttons ===
-document.querySelectorAll('.tool').forEach(btn => {
+// === Size buttons ===
+document.querySelectorAll('.size-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelector('.tool.active')?.classList.remove('active');
+        document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        selectedTool = btn.id;
-        if (selectedTool === 'eraser') {
-            ctx.strokeStyle = '#ffffff';
-        } else {
-            ctx.strokeStyle = selectedColor;
-        }
+        brushSize = parseInt(btn.dataset.size);
+        ctx.lineWidth = brushSize;
     });
 });
 
 // === Color buttons ===
 document.querySelectorAll('.colors .option').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelector('.colors .selected')?.classList.remove('selected');
+        document.querySelectorAll('.colors .option').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         const color = btn.style.backgroundColor;
         if (color) {
             selectedColor = color;
-            document.getElementById('color-picker').value = rgbToHex(color);
-            if (selectedTool !== 'eraser') {
-                ctx.strokeStyle = selectedColor;
-            }
+            ctx.strokeStyle = selectedColor;
         }
     });
-});
-
-// === Color picker ===
-document.getElementById('color-picker').addEventListener('input', (e) => {
-    const color = e.target.value;
-    selectedColor = color;
-    document.querySelector('.colors .selected')?.classList.remove('selected');
-    e.target.parentElement.classList.add('selected');
-    e.target.parentElement.style.backgroundColor = color;
-    if (selectedTool !== 'eraser') {
-        ctx.strokeStyle = color;
-    }
-});
-
-// === Size slider ===
-document.getElementById('size-slider').addEventListener('input', (e) => {
-    brushSize = parseInt(e.target.value);
-    ctx.lineWidth = brushSize;
 });
 
 // === Clear canvas ===
@@ -211,24 +182,20 @@ document.querySelector('.save-img').addEventListener('click', () => {
     link.click();
 });
 
-// === Helper: RGB to Hex ===
-function rgbToHex(rgb) {
-    const match = rgb.match(/\d+/g);
-    if (!match) return '#000000';
-    const r = parseInt(match[0]);
-    const g = parseInt(match[1]);
-    const b = parseInt(match[2]);
-    return '#' + [r, g, b].map(x => {
-        const hex = x.toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-    }).join('');
-}
-
 // === Initialize ===
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
-const initialColor = document.querySelector('.colors .selected');
+// Set initial color button
+const initialColor = document.querySelector('.colors .option.selected');
 if (initialColor) {
-    initialColor.style.backgroundColor = '#FF0000';
+    selectedColor = initialColor.style.backgroundColor;
+    ctx.strokeStyle = selectedColor;
+}
+
+// Set initial size button
+const initialSize = document.querySelector('.size-btn.active');
+if (initialSize) {
+    brushSize = parseInt(initialSize.dataset.size);
+    ctx.lineWidth = brushSize;
 }
