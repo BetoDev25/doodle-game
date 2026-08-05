@@ -42,6 +42,15 @@ func main() {
 		handlers.HandlerMe(w, r, db)
 	})
 
+	// TEST - TEMPORARY
+	mux.HandleFunc("GET /api/test-drawing/{id}", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetTestDrawing(w, r, db)
+	})
+
+	mux.HandleFunc("POST /api/test-drawing", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerTestSaveDrawing(w, r, db)
+	})
+
 	log.Println("Server starting on http://localhost:8080")
 	log.Fatal(server.ListenAndServe())
 }

@@ -174,12 +174,36 @@ document.querySelector('.clear-canvas').addEventListener('click', () => {
     currentStroke = [];
 });
 
-// === Save image ===
-document.querySelector('.save-img').addEventListener('click', () => {
-    const link = document.createElement('a');
-    link.download = `doodle-${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+// === Save image (TESTING - sends stroke data to backend) ===
+document.querySelector('.save-img').addEventListener('click', async () => {
+    if (strokes.length === 0) {
+        alert('No strokes to save! Draw something first.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/test-drawing', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                strokes: strokes
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert(`Drawing saved! ID: ${data.id}\nStrokes: ${data.stroke_count}`);
+            console.log('Saved drawing:', data);
+        } else {
+            alert(`Error: ${data.error || 'Failed to save'}`);
+        }
+    } catch (error) {
+        alert('Error connecting to server');
+        console.error(error);
+    }
 });
 
 // === Initialize ===
@@ -198,4 +222,64 @@ const initialSize = document.querySelector('.size-btn.active');
 if (initialSize) {
     brushSize = parseInt(initialSize.dataset.size);
     ctx.lineWidth = brushSize;
+}
+
+
+
+document.getElementById('loadDrawingBtn').addEventListener('click', async () => {
+    const matchId = document.getElementById('matchIdInput').value.trim();
+    const statusDiv = document.getElementById('loadStatus');
+    
+    if (!matchId) {
+        statusDiv.textContent = '❌ Please enter a match ID';
+        statusDiv.style.color = 'red';
+        return;
+    }
+
+    try {
+        statusDiv.textContent = '⏳ Loading drawing...';
+        statusDiv.style.color = '#333';
+
+        const response = await fetch(`/api/test-drawing/${matchId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+            statusDiv.textContent = `✅ Loaded ${data.stroke_count} strokes!`;
+            statusDiv.style.color = 'green';
+            
+            // Render the drawing
+            renderStrokes(data.strokes);
+        } else {
+            statusDiv.textContent = `❌ Error: ${data.error || 'Failed to load'}`;
+            statusDiv.style.color = 'red';
+        }
+    } catch (error) {
+        statusDiv.textContent = '❌ Error connecting to server';
+        statusDiv.style.color = 'red';
+        console.error(error);
+    }
+});
+
+// Render strokes on canvas (clears first)
+function renderStrokes(strokesData) {
+    // Clear canvas
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw each stroke
+    strokesData.forEach(stroke => {
+        ctx.strokeStyle = stroke.color || '#000000';
+        ctx.lineWidth = stroke.size || 5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        if (stroke.points && stroke.points.length > 0) {
+            ctx.beginPath();
+            ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+            for (let i = 1; i < stroke.points.length; i++) {
+                ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+            }
+            ctx.stroke();
+        }
+    });
 }
