@@ -17,9 +17,14 @@ func main() {
 	apiCfg := handlers.SetupAPIConfig(*env)
 	mux, server := config.SetupServer(*env)
 	config := config.SetupConfig(*env)
+	db := apiCfg.DB
+	hub := handlers.SetupWebSocket(db)
+
 	// Serve static files from the "static" directory
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
-	db := apiCfg.DB
+
+	// Websocket
+	mux.HandleFunc("/ws", handlers.ServeWebSocket(hub, db))
 
 	// Root route - index.html
 	mux.HandleFunc("/", handlers.Middleware(db, func(w http.ResponseWriter, r *http.Request) {

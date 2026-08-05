@@ -5,6 +5,9 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+
+	"github.com/BetoDev25/doodle-game/backend/internal/database"
+	"github.com/BetoDev25/doodle-game/backend/internal/websocket"
 )
 
 func RespondWithError(w http.ResponseWriter, code int, msg string, err error) {
@@ -37,4 +40,10 @@ func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 func GetUserIDFromContext(r *http.Request) (uuid.UUID, bool) {
 	userID, ok := r.Context().Value("userID").(uuid.UUID)
 	return userID, ok
+}
+
+func SetupWebSocket(db *database.Queries) *websocket.Hub {
+	hub := websocket.NewHub(db)
+	go hub.Run()
+	return hub
 }
