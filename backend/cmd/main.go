@@ -51,6 +51,12 @@ func main() {
 		handlers.HandlerTestSaveDrawing(w, r, db)
 	})
 
+	// End of Tesst
+
+	mux.HandleFunc("POST /api/logout", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerLogoutUser(w, r, db)
+	})
+
 	log.Println("Server starting on http://localhost:8080")
 	log.Fatal(server.ListenAndServe())
 }

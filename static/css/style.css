@@ -31,11 +31,13 @@ body {
 }
 
 #drawing-canvas {
-    width: 800px;
-    height: 600px;
+    width: 600px;
+    height: 400px;
     background: white;
     cursor: crosshair;
     display: block;
+    border: 2px solid #ddd;
+    border-radius: 4px;
 }
 
 /* Controls Panel */
@@ -91,14 +93,28 @@ body {
 }
 
 /* Color buttons */
+.colors .options {
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 6px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    justify-content: start;
+}
+
 .colors .option {
     width: 30px;
     height: 30px;
     border-radius: 50%;
     padding: 0;
-    border: 3px solid transparent;
+    margin: 0;
+    border: 2px solid transparent;
     cursor: pointer;
     transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .colors .option:hover {

@@ -1,0 +1,64 @@
+/* Taskbar */
+#taskbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: #2c3e50;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 1000;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.taskbar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.taskbar-logo {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.taskbar-logo:hover {
+    color: #4A90D9;
+}
+
+.taskbar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+#taskbarUsername {
+    font-size: 14px;
+    color: #ecf0f1;
+}
+
+.taskbar-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.taskbar-btn:hover {
+    background: #c0392b;
+}
+
+/* Add padding to body so content isn't hidden behind taskbar */
+body {
+    padding-top: 60px;
+}

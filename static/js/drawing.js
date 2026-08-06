@@ -35,6 +35,22 @@ function getPos(clientX, clientY) {
     return { x, y };
 }
 
+// === Convert to relative coordinates ===
+function toRelative(x, y) {
+    return {
+        x: x / canvas.width,
+        y: y / canvas.height
+    };
+}
+
+// === Convert from relative to absolute ===
+function toAbsolute(relX, relY) {
+    return {
+        x: relX * canvas.width,
+        y: relY * canvas.height
+    };
+}
+
 // === Check if cursor is inside canvas ===
 function checkInside(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
@@ -55,7 +71,9 @@ function startDraw(e) {
     const pos = getPos(clientX, clientY);
     lastX = pos.x;
     lastY = pos.y;
-    currentStroke = [{ x: pos.x, y: pos.y }];
+    // Store relative coordinates
+    const rel = toRelative(pos.x, pos.y);
+    currentStroke = [{ x: rel.x, y: rel.y }];
 }
 
 // === Draw function (uses document mousemove) ===
@@ -69,6 +87,7 @@ function draw(e) {
     const pos = getPos(clientX, clientY);
     const x = pos.x;
     const y = pos.y;
+    const rel = toRelative(x, y);
     
     // If we were outside and now inside, start a new stroke (no straight line)
     if (!isInside && inside) {
@@ -81,7 +100,7 @@ function draw(e) {
             });
         }
         // Start a fresh stroke at the entry point
-        currentStroke = [{ x, y }];
+        currentStroke = [{ x: rel.x, y: rel.y }];
         lastX = x;
         lastY = y;
         isInside = true;
@@ -109,7 +128,8 @@ function draw(e) {
         ctx.moveTo(lastX, lastY);
         ctx.lineTo(x, y);
         ctx.stroke();
-        currentStroke.push({ x, y });
+        // Store relative coordinates
+        currentStroke.push({ x: rel.x, y: rel.y });
         lastX = x;
         lastY = y;
     }
@@ -174,6 +194,7 @@ document.querySelector('.clear-canvas').addEventListener('click', () => {
     currentStroke = [];
 });
 
+/*
 // === Save image (TESTING - sends stroke data to backend) ===
 document.querySelector('.save-img').addEventListener('click', async () => {
     if (strokes.length === 0) {
@@ -205,6 +226,7 @@ document.querySelector('.save-img').addEventListener('click', async () => {
         console.error(error);
     }
 });
+*/
 
 // === Initialize ===
 resizeCanvas();
@@ -224,8 +246,8 @@ if (initialSize) {
     ctx.lineWidth = brushSize;
 }
 
-
-
+/*
+// === Load drawing button ===
 document.getElementById('loadDrawingBtn').addEventListener('click', async () => {
     const matchId = document.getElementById('matchIdInput').value.trim();
     const statusDiv = document.getElementById('loadStatus');
@@ -259,8 +281,9 @@ document.getElementById('loadDrawingBtn').addEventListener('click', async () => 
         console.error(error);
     }
 });
+*/
 
-// Render strokes on canvas (clears first)
+// === Render strokes on canvas (clears first) ===
 function renderStrokes(strokesData) {
     // Clear canvas
     ctx.fillStyle = '#ffffff';
@@ -275,9 +298,12 @@ function renderStrokes(strokesData) {
         
         if (stroke.points && stroke.points.length > 0) {
             ctx.beginPath();
-            ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+            // Convert relative coordinates to absolute for rendering
+            const first = toAbsolute(stroke.points[0].x, stroke.points[0].y);
+            ctx.moveTo(first.x, first.y);
             for (let i = 1; i < stroke.points.length; i++) {
-                ctx.lineTo(stroke.points[i].x, stroke.points[i].y);
+                const point = toAbsolute(stroke.points[i].x, stroke.points[i].y);
+                ctx.lineTo(point.x, point.y);
             }
             ctx.stroke();
         }

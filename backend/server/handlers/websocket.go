@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"log"
 	"net/http"
 
@@ -19,36 +20,46 @@ var upgrader = gorilla.Upgrader{
 
 func ServeWebSocket(hub *websocket.Hub, db *database.Queries) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Get username from query param or cookie
-		username := r.URL.Query().Get("username")
-		if username == "" {
-			// Try to get from context (set by middleware)
-			if u, ok := r.Context().Value("username").(string); ok {
-				username = u
-			} else {
-				username = "guest"
-			}
+		// get session token
+		cookie, err := r.Cookie("session_token")
+		if err != nil || cookie.Value == "" {
+			log.Println("No session cookie found")
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
 		}
 
+		// Decode base64 cookie
+		decoded, err := base64.URLEncoding.DecodeString(cookie.Value)
+		if err != nil {
+			log.Printf("Failed to decode session token: %v", err)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		token := string(decoded)
+
+		// get user from database
+		user, err := db.GetUserByCookie(r.Context(), token)
+		if err != nil {
+			log.Printf("Invalid session: %v", err)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// upgrade to websocket
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Println("WebSocket upgrade error:", err)
 			return
 		}
 
-		userID, ok := r.Context().Value("user_id").(string) // from Middleware
-		if !ok {
-			log.Println("User ID not found in context")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-
+		// create client
 		client := &websocket.Client{
 			Hub:      hub,
 			Conn:     conn,
 			Send:     make(chan []byte, 256),
-			Username: username,
-			UserID:   userID,
+			Username: user.ID.String(), // user.ID is UUID,
+			UserID:   user.Username,
+			MatchID:  "",
 		}
 
 		hub.Register <- client
