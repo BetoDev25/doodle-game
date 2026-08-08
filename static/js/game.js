@@ -186,11 +186,7 @@ function handleMatchFound(data) {
     
     showDrawingScreen();
     
-    if (role === 'starter') {
-        startDoodlePhase(10);
-    } else {
-        startFinishPhase(60);
-    }
+    startDoodlePhase(10);
 }
 
 // ===== Doodle Phase =====

@@ -19,6 +19,8 @@ type Hub struct {
 
 	Queue []*Client
 
+	MatchStates map[string]*MatchState // matchID -> state
+
 	Register chan *Client
 
 	Unregister chan *Client
@@ -28,14 +30,22 @@ type Hub struct {
 	DB *database.Queries
 }
 
+type MatchState struct {
+	DoodleComplete map[string]bool
+	DoodleStrokes  map[string][]byte
+	FinishComplete map[string]bool
+	FinishStrokes  map[string][]byte
+}
+
 func NewHub(db *database.Queries) *Hub {
 	return &Hub{
-		Clients:    make(map[*Client]bool),
-		Rooms:      make(map[string][]*Client),
-		Queue:      []*Client{},
-		Register:   make(chan *Client),
-		Unregister: make(chan *Client),
-		DB:         db,
+		Clients:     make(map[*Client]bool),
+		Rooms:       make(map[string][]*Client),
+		Queue:       []*Client{},
+		Register:    make(chan *Client),
+		Unregister:  make(chan *Client),
+		MatchStates: make(map[string]*MatchState),
+		DB:          db,
 	}
 }
 
@@ -144,11 +154,14 @@ func (h *Hub) handleJoinQueue(client *Client) {
 
 	// Try to pair players
 	if len(h.Queue) >= 2 {
+		log.Printf("Queue has 2 players, creating match...") // DEBUG
 		p1 := h.Queue[0]
 		p2 := h.Queue[1]
 		h.Queue = h.Queue[2:]
 
 		h.createMatch(p1, p2)
+	} else {
+		log.Printf("Queue has %d players, waiting for more", len(h.Queue)) // DEBUG
 	}
 }
 
@@ -162,20 +175,32 @@ func (h *Hub) handleLeaveQueue(client *Client) {
 
 // createMatch pairs two players and starts a match
 func (h *Hub) createMatch(p1, p2 *Client) {
-	matchID := generateMatchID()
+	matchID := uuid.New().String()
 
-	// Create room
 	h.Rooms[matchID] = []*Client{p1, p2}
+	h.MatchStates[matchID] = &MatchState{
+		DoodleComplete: make(map[string]bool),
+		DoodleStrokes:  make(map[string][]byte),
+		FinishComplete: make(map[string]bool),
+		FinishStrokes:  make(map[string][]byte),
+	}
 
-	// Assign match IDs to clients
 	p1.MatchID = matchID
 	p2.MatchID = matchID
 
-	// Notify players
-	p1.Send <- createMatchFoundMessage(matchID, "starter")
-	p2.Send <- createMatchFoundMessage(matchID, "finisher")
+	// Non-blocking sends
+	select {
+	case p1.Send <- createMatchFoundMessage(matchID, "starter"):
+	default:
+		log.Printf("p1 Send channel full")
+	}
+	select {
+	case p2.Send <- createMatchFoundMessage(matchID, "starter"):
+	default:
+		log.Printf("p2 Send channel full")
+	}
 
-	log.Printf("Match created: %s between %s and %s", matchID, p1.Username, p2.Username)
+	log.Printf("Match created: %s", matchID)
 }
 
 // handleDoodleComplete handles the doodle phase completion
@@ -187,58 +212,73 @@ func (h *Hub) handleDoodleComplete(client *Client, data []byte) {
 	}
 
 	h.Mu.Lock()
-	room, ok := h.Rooms[client.MatchID]
-	h.Mu.Unlock()
+	defer h.Mu.Unlock()
+
+	// Get match state
+	state, ok := h.MatchStates[client.MatchID]
 	if !ok {
-		log.Printf("Match not found: %s", client.MatchID)
+		log.Printf("Match state not found: %s", client.MatchID)
 		return
 	}
 
-	var finisher *Client
-	for _, c := range room {
-		if c.UserID != client.UserID {
-			finisher = c
-			break
+	// Store this player's doodle
+	state.DoodleStrokes[client.UserID] = doodleData.Strokes
+	state.DoodleComplete[client.UserID] = true
+
+	// Check if both players have completed doodle
+	if len(state.DoodleComplete) == 2 {
+		// Parse UUIDs
+		matchID, _ := uuid.Parse(client.MatchID)
+
+		var players []*Client
+		for _, c := range h.Rooms[client.MatchID] {
+			players = append(players, c)
 		}
-	}
-	if finisher == nil {
-		log.Printf("Finisher not found for match: %s", client.MatchID)
-		return
-	}
 
-	matchID, err := uuid.Parse(client.MatchID)
-	if err != nil {
-		log.Printf("Error parsing match ID: %v", err)
-		return
+		// Save BOTH doodles to database
+		for _, p := range players {
+			userID, _ := uuid.Parse(p.UserID)
+
+			// Find the other player's ID for finisher
+			var otherID uuid.UUID
+			for _, c := range players {
+				if c.UserID != p.UserID {
+					otherID, _ = uuid.Parse(c.UserID)
+					break
+				}
+			}
+
+			_, err := h.DB.CreateDrawing(context.Background(), database.CreateDrawingParams{
+				MatchID:         matchID,
+				StarterID:       userID,
+				FinisherID:      otherID,
+				DoodleStrokes:   state.DoodleStrokes[p.UserID],
+				FinishedStrokes: json.RawMessage(`[]`),
+			})
+			if err != nil {
+				log.Printf("Error saving doodle for %s: %v", p.UserID, err)
+				continue
+			}
+		}
+
+		// Send both doodles to both players
+		for _, p := range players {
+			var otherUserID string
+			for userID := range state.DoodleComplete {
+				if userID != p.UserID {
+					otherUserID = userID
+					break
+				}
+			}
+			p.Send <- createReceiveDoodleMessage(state.DoodleStrokes[otherUserID], 60)
+		}
+
+		// Clear doodle state
+		state.DoodleComplete = make(map[string]bool)
+		state.DoodleStrokes = make(map[string][]byte)
+
+		log.Printf("Both doodles saved and sent for match: %s", client.MatchID)
 	}
-
-	starterID, err := uuid.Parse(client.UserID)
-	if err != nil {
-		log.Printf("Error parsing starter ID: %v", err)
-		return
-	}
-
-	finisherID, err := uuid.Parse(finisher.UserID)
-	if err != nil {
-		log.Printf("Error parsing finisher ID: %v", err)
-		return
-	}
-
-	_, err = h.DB.CreateDrawing(context.Background(), database.CreateDrawingParams{
-		MatchID:         matchID,
-		StarterID:       starterID,
-		FinisherID:      finisherID,
-		DoodleStrokes:   doodleData.Strokes,
-		FinishedStrokes: json.RawMessage(`[]`), //initially empty
-	})
-	if err != nil {
-		log.Printf("Error saving doodle: %v", err)
-		return
-	}
-
-	finisher.Send <- createReceiveDoodleMessage(doodleData.Strokes, 60)
-
-	log.Printf("Doodle saved and sent to finisher: %s", client.MatchID)
 }
 
 // handleFinishDrawing handles the finish phase completion
