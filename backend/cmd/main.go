@@ -23,6 +23,16 @@ func main() {
 	// Serve static files from the "static" directory
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
+	// TEST - TEMPORARY
+	mux.HandleFunc("/view-drawings", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/view_drawings.html")
+	})
+	mux.HandleFunc("GET /api/view-drawings/{id}", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerViewDrawings(w, r, db)
+	})
+
+	// END OF TEST - TEMPORARY
+
 	// Websocket
 	mux.HandleFunc("/ws", handlers.ServeWebSocket(hub, db))
 
@@ -42,14 +52,16 @@ func main() {
 		handlers.HandlerMe(w, r, db)
 	})
 
-	// TEST - TEMPORARY
-	mux.HandleFunc("GET /api/test-drawing/{id}", func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerGetTestDrawing(w, r, db)
-	})
+	/*
+		// TEST - TEMPORARY
+		mux.HandleFunc("GET /api/test-drawing/{id}", func(w http.ResponseWriter, r *http.Request) {
+			handlers.HandlerGetTestDrawing(w, r, db)
+		})
 
-	mux.HandleFunc("POST /api/test-drawing", func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerTestSaveDrawing(w, r, db)
-	})
+		mux.HandleFunc("POST /api/test-drawing", func(w http.ResponseWriter, r *http.Request) {
+			handlers.HandlerTestSaveDrawing(w, r, db)
+		})
+	*/
 
 	// End of Tesst
 

@@ -34,7 +34,7 @@ function initDrawingTool() {
 
     resizeCanvas();
     bindEvents();
-    // Set initial color and size
+
     const initialColor = document.querySelector('.colors .option.selected');
     if (initialColor) {
         selectedColor = initialColor.style.backgroundColor;
@@ -46,6 +46,42 @@ function initDrawingTool() {
         ctx.lineWidth = brushSize;
     }
 }
+
+// === Size buttons (Event Delegation) ===
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.size-btn');
+    if (!btn) return;
+    
+    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    brushSize = parseInt(btn.dataset.size);
+    if (ctx) ctx.lineWidth = brushSize;
+});
+
+// === Color buttons (Event Delegation) ===
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.colors .option');
+    if (!btn) return;
+    
+    document.querySelectorAll('.colors .option').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    const color = btn.style.backgroundColor;
+    if (color) {
+        selectedColor = color;
+        if (ctx) ctx.strokeStyle = selectedColor;
+    }
+});
+
+// === Clear canvas (Event Delegation) ===
+document.addEventListener('click', function(e) {
+    if (!e.target.classList.contains('clear-canvas')) return;
+    if (!ctx || !canvas) return;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    strokes = [];
+    currentStroke = [];
+});
 
 function getStrokes() {
     return strokes;
@@ -197,36 +233,7 @@ function bindEvents() {
     document.addEventListener('touchend', endDraw, { passive: false });
 }
 
-// === Size buttons ===
-document.querySelectorAll('.size-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        brushSize = parseInt(btn.dataset.size);
-        ctx.lineWidth = brushSize;
-    });
-});
 
-// === Color buttons ===
-document.querySelectorAll('.colors .option').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.colors .option').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        const color = btn.style.backgroundColor;
-        if (color) {
-            selectedColor = color;
-            ctx.strokeStyle = selectedColor;
-        }
-    });
-});
-
-// === Clear canvas ===
-document.querySelector('.clear-canvas').addEventListener('click', () => {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    strokes = [];
-    currentStroke = [];
-});
 
 // === NO AUTO-INITIALIZATION ===
 // game.js calls initDrawingTool() when the canvas is ready

@@ -57,8 +57,8 @@ func ServeWebSocket(hub *websocket.Hub, db *database.Queries) http.HandlerFunc {
 			Hub:      hub,
 			Conn:     conn,
 			Send:     make(chan []byte, 256),
-			Username: user.ID.String(), // user.ID is UUID,
-			UserID:   user.Username,
+			UserID:   user.ID.String(), // user.ID is UUID,
+			Username: user.Username,
 			MatchID:  "",
 		}
 

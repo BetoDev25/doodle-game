@@ -15,13 +15,11 @@ import (
 type Drawing struct {
 	ID              uuid.UUID
 	MatchID         uuid.UUID
-	StarterID       uuid.UUID
-	FinisherID      uuid.UUID
+	UserID          uuid.UUID
 	DoodleStrokes   json.RawMessage
 	FinishedStrokes json.RawMessage
 	VoteCount       sql.NullInt32
 	CreatedAt       sql.NullTime
-	FinishedAt      sql.NullTime
 }
 
 type Match struct {

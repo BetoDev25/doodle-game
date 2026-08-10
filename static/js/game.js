@@ -2,6 +2,7 @@ let ws = null;
 let matchID = null;
 let role = null;
 let gameInterval = null;
+let opponentDoodle = null;
 
 // ===== Screen Management =====
 function showLobbyScreen() {
@@ -222,6 +223,7 @@ function submitDoodle() {
 
 // ===== Finish Phase =====
 function handleReceiveDoodle(data) {
+    opponentDoodle = data.strokes;
     renderStrokes(data.strokes);
     startFinishPhase(60);
 }
@@ -231,6 +233,8 @@ function startFinishPhase(duration) {
     gameState.timer = duration;
     updatePhase('✏️ Complete the drawing!');
     updateTimer(duration);
+
+    strokes = opponentDoodle ? JSON.parse(JSON.stringify(opponentDoodle)) : [];
     
     clearInterval(gameInterval);
     gameInterval = setInterval(() => {
@@ -258,6 +262,7 @@ function submitFinishedDrawing() {
 
 // ===== Match Complete =====
 function handleMatchComplete(data) {
+    console.log('Match complete data:', data);
     clearInterval(gameInterval);
     showResultScreen(data);
 }

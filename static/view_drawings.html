@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>View Drawings</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .drawing-grid { display: flex; gap: 30px; flex-wrap: wrap; margin-top: 20px; }
+        .drawing-box { border: 1px solid #ddd; padding: 15px; border-radius: 8px; }
+        .drawing-box h4 { margin: 0 0 10px 0; }
+        canvas { border: 1px solid #ccc; border-radius: 4px; }
+        .match-info { margin: 10px 0; color: #666; }
+        input, button { padding: 8px; font-size: 14px; }
+        input { width: 300px; }
+        button { cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>View Drawings</h1>
+    <input type="text" id="matchIdInput" placeholder="Enter Match ID">
+    <button id="loadBtn">Load</button>
+    <div id="result"></div>
+
+    <script src="/js/view_drawings.js"></script>
+</body>
+</html>

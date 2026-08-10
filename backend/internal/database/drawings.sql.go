@@ -13,21 +13,14 @@ import (
 )
 
 const createDrawing = `-- name: CreateDrawing :one
-INSERT INTO drawings (match_id, starter_id, finisher_id, doodle_strokes, finished_strokes)
-VALUES (
-	$1,
-	$2,
-	$3,
-    $4,
-    $5
-)
-RETURNING id, match_id, starter_id, finisher_id, doodle_strokes, finished_strokes, vote_count, created_at, finished_at
+INSERT INTO drawings (match_id, user_id, doodle_strokes, finished_strokes)
+VALUES ($1, $2, $3, $4)
+RETURNING id, match_id, user_id, doodle_strokes, finished_strokes, vote_count, created_at
 `
 
 type CreateDrawingParams struct {
 	MatchID         uuid.UUID
-	StarterID       uuid.UUID
-	FinisherID      uuid.UUID
+	UserID          uuid.UUID
 	DoodleStrokes   json.RawMessage
 	FinishedStrokes json.RawMessage
 }
@@ -35,8 +28,7 @@ type CreateDrawingParams struct {
 func (q *Queries) CreateDrawing(ctx context.Context, arg CreateDrawingParams) (Drawing, error) {
 	row := q.db.QueryRowContext(ctx, createDrawing,
 		arg.MatchID,
-		arg.StarterID,
-		arg.FinisherID,
+		arg.UserID,
 		arg.DoodleStrokes,
 		arg.FinishedStrokes,
 	)
@@ -44,51 +36,64 @@ func (q *Queries) CreateDrawing(ctx context.Context, arg CreateDrawingParams) (D
 	err := row.Scan(
 		&i.ID,
 		&i.MatchID,
-		&i.StarterID,
-		&i.FinisherID,
+		&i.UserID,
 		&i.DoodleStrokes,
 		&i.FinishedStrokes,
 		&i.VoteCount,
 		&i.CreatedAt,
-		&i.FinishedAt,
 	)
 	return i, err
 }
 
-const getDrawingByMatchID = `-- name: GetDrawingByMatchID :one
-SELECT id, match_id, starter_id, finisher_id, doodle_strokes, finished_strokes, vote_count, created_at, finished_at FROM drawings
+const getDrawingsByMatchID = `-- name: GetDrawingsByMatchID :many
+SELECT id, match_id, user_id, doodle_strokes, finished_strokes, vote_count, created_at FROM drawings
 WHERE match_id = $1
 `
 
-func (q *Queries) GetDrawingByMatchID(ctx context.Context, matchID uuid.UUID) (Drawing, error) {
-	row := q.db.QueryRowContext(ctx, getDrawingByMatchID, matchID)
-	var i Drawing
-	err := row.Scan(
-		&i.ID,
-		&i.MatchID,
-		&i.StarterID,
-		&i.FinisherID,
-		&i.DoodleStrokes,
-		&i.FinishedStrokes,
-		&i.VoteCount,
-		&i.CreatedAt,
-		&i.FinishedAt,
-	)
-	return i, err
+func (q *Queries) GetDrawingsByMatchID(ctx context.Context, matchID uuid.UUID) ([]Drawing, error) {
+	rows, err := q.db.QueryContext(ctx, getDrawingsByMatchID, matchID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Drawing
+	for rows.Next() {
+		var i Drawing
+		if err := rows.Scan(
+			&i.ID,
+			&i.MatchID,
+			&i.UserID,
+			&i.DoodleStrokes,
+			&i.FinishedStrokes,
+			&i.VoteCount,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateDrawingFinished = `-- name: UpdateDrawingFinished :exec
 UPDATE drawings
-SET finished_strokes = $1, finished_at = NOW()
-WHERE match_id = $2
+SET finished_strokes = $1
+WHERE match_id = $2 AND user_id = $3
 `
 
 type UpdateDrawingFinishedParams struct {
 	FinishedStrokes json.RawMessage
 	MatchID         uuid.UUID
+	UserID          uuid.UUID
 }
 
 func (q *Queries) UpdateDrawingFinished(ctx context.Context, arg UpdateDrawingFinishedParams) error {
-	_, err := q.db.ExecContext(ctx, updateDrawingFinished, arg.FinishedStrokes, arg.MatchID)
+	_, err := q.db.ExecContext(ctx, updateDrawingFinished, arg.FinishedStrokes, arg.MatchID, arg.UserID)
 	return err
 }
