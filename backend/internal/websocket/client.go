@@ -24,6 +24,7 @@ type Client struct {
 	UserID   string
 	Username string
 	MatchID  string // empty if not in a match
+	IsGuest  bool
 }
 
 func (c *Client) ReadPump() {

@@ -20,29 +20,41 @@ var upgrader = gorilla.Upgrader{
 
 func ServeWebSocket(hub *websocket.Hub, db *database.Queries) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// get session token
-		cookie, err := r.Cookie("session_token")
-		if err != nil || cookie.Value == "" {
-			log.Println("No session cookie found")
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
+		username := r.URL.Query().Get("username")
+		isGuest := r.URL.Query().Get("guest") == "true"
 
-		// Decode base64 cookie
-		decoded, err := base64.URLEncoding.DecodeString(cookie.Value)
-		if err != nil {
-			log.Printf("Failed to decode session token: %v", err)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-		token := string(decoded)
+		var userID string
 
-		// get user from database
-		user, err := db.GetUserByCookie(r.Context(), token)
-		if err != nil {
-			log.Printf("Invalid session: %v", err)
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
+		if isGuest {
+			userID = username
+		} else {
+			// get session token
+			cookie, err := r.Cookie("session_token")
+			if err != nil || cookie.Value == "" {
+				log.Println("No session cookie found")
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			// Decode base64 cookie
+			decoded, err := base64.URLEncoding.DecodeString(cookie.Value)
+			if err != nil {
+				log.Printf("Failed to decode session token: %v", err)
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+			token := string(decoded)
+
+			// get user from database
+			user, err := db.GetUserByCookie(r.Context(), token)
+			if err != nil {
+				log.Printf("Invalid session: %v", err)
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			username = user.Username
+			userID = user.ID.String()
 		}
 
 		// upgrade to websocket
@@ -57,9 +69,10 @@ func ServeWebSocket(hub *websocket.Hub, db *database.Queries) http.HandlerFunc {
 			Hub:      hub,
 			Conn:     conn,
 			Send:     make(chan []byte, 256),
-			UserID:   user.ID.String(), // user.ID is UUID,
-			Username: user.Username,
+			UserID:   userID, //user.ID.String(), // user.ID is UUID,
+			Username: username,
 			MatchID:  "",
+			IsGuest:  isGuest,
 		}
 
 		hub.Register <- client

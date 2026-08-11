@@ -1,4 +1,34 @@
 // ===== Taskbar =====
+window.currentUser = null;
+
+
+async function getCurrentUser() {
+    const response = await fetch('/api/me');
+    let user = null;
+    let isGuest = true;
+    let username = null;
+    if (response.ok) {
+        user = await response.json();
+        isGuest = false;
+        username = user.Username;
+    }
+    
+    // Not logged in — create guest
+    if (isGuest) {
+        username = localStorage.getItem('guestUsername');
+        if (!username) {
+            username = 'Guest' + Math.floor(Math.random() * 10000);
+            localStorage.setItem('guestUsername', username);
+        }
+    }
+    
+    window.currentUser = {
+        username: username,
+        isGuest: isGuest,
+    }
+    return window.currentUser;
+}
+
 function loadTaskbar() {
     // Get username from session
     fetch('/api/me')
@@ -26,7 +56,9 @@ function loadTaskbar() {
             });
             
             if (response.ok) {
-                window.location.href = '/login.html';
+                localStorage.removeItem('guestUsername');
+                window.location.reload();
+                //window.location.href = '/login.html';
             } else {
                 alert('Logout failed');
             }

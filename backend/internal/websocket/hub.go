@@ -351,6 +351,10 @@ func (h *Hub) handleFinishDrawing(client *Client, data []byte) {
 		}
 
 		// Clean up
+		for _, p := range players {
+			p.MatchID = "" // ← Reset match ID for both players
+		}
+
 		delete(h.Rooms, client.MatchID)
 		delete(h.MatchStates, client.MatchID)
 

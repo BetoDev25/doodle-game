@@ -18,6 +18,8 @@ func Middleware(db *database.Queries, next http.HandlerFunc) http.HandlerFunc {
 			"/login.html",
 			"/signup.html",
 			"/static/",
+			"/",
+			"/game.html",
 		}
 
 		//check if current path is public
@@ -29,10 +31,12 @@ func Middleware(db *database.Queries, next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		sessionToken, err := cookies.Read(r, "session_token")
-		if err != nil || sessionToken == "" {
-			http.Redirect(w, r, "/login.html", http.StatusSeeOther)
-			return
-		}
+		/*
+			if err != nil || sessionToken == "" {
+				http.Redirect(w, r, "/login.html", http.StatusSeeOther)
+				return
+			}
+		*/
 
 		//Get user_id
 		user, err := db.GetUserByCookie(r.Context(), sessionToken)

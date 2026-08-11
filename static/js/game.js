@@ -154,7 +154,9 @@ function updatePhase(text) {
 
 // ===== Matchmaking =====
 function startMatchmaking() {
-    connectWebSocket();
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        connectWebSocket();
+    }
     showQueueScreen();
     
     if (ws && ws.readyState === WebSocket.OPEN) {
@@ -290,7 +292,20 @@ function showResultScreen(data) {
     renderResultDrawing('theirDrawingCanvas', data.their_drawing);
     
     document.getElementById('playAgainBtn').addEventListener('click', () => {
-        showLobbyScreen();
+        // Reset frontend state
+        matchID = null;
+        role = null;
+        gameState.matchID = null;
+        gameState.role = null;
+        gameState.phase = 'idle';
+        
+        // Make sure WebSocket is still connected
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            showLobbyScreen();
+        } else {
+            connectWebSocket();
+            showLobbyScreen();
+        }
     });
 }
 
