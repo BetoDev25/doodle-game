@@ -12,40 +12,39 @@ import (
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
 )
 
-func HandlerLoginUser(w http.ResponseWriter, r *http.Request, db *database.Queries, cfg config.Config) {
-	type params struct {
+func HandlerCreateGuest(w http.ResponseWriter, r *http.Request, db *database.Queries, cfg config.Config) {
+	var req struct {
 		Username string `json:"username"`
-		Password string `json:"password"`
 	}
 
-	var input params
-	err := json.NewDecoder(r.Body).Decode(&input)
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
 
-	// Get user from database
-	user, err := db.GetUserByUsername(r.Context(), input.Username)
-	if err != nil {
-		RespondWithError(w, http.StatusUnauthorized, "Invalid username or password", nil)
+	username := req.Username
+	log.Printf("Creating guest with username: %s", username)
+
+	if username == "" {
+		RespondWithError(w, http.StatusBadRequest, "Username is required", nil)
 		return
 	}
 
-	// Check password
-	isValid, err := auth.CheckPasswordHash(input.Password, user.PasswordHash.String)
-	if err != nil || !isValid {
-		RespondWithError(w, http.StatusUnauthorized, "Invalid username or password", nil)
+	guest, err := db.CreateGuest(r.Context(), username)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Couldn't create guest", err)
 		return
 	}
 
 	token := auth.GenerateSessionToken()
 	session, err := db.CreateSession(r.Context(), database.CreateSessionParams{
 		Token:     token,
-		UserID:    user.ID,
-		ExpiresAt: time.Now().Add(8 * time.Hour),
+		UserID:    guest.ID,
+		ExpiresAt: time.Now().Add(24 * time.Hour),
 	})
 	if err != nil {
+		log.Printf("CreateSession error: %v", err)
 		RespondWithError(w, http.StatusInternalServerError, "Couldn't create session", err)
 		return
 	}
@@ -55,7 +54,7 @@ func HandlerLoginUser(w http.ResponseWriter, r *http.Request, db *database.Queri
 		maxAge = 60
 	}
 
-	//Secure session cookie
+	// Set session cookie
 	sessionCookie := &http.Cookie{
 		Name:     "session_token",
 		Value:    token,
@@ -74,9 +73,8 @@ func HandlerLoginUser(w http.ResponseWriter, r *http.Request, db *database.Queri
 		return
 	}
 
-	// Return message
-	RespondWithJSON(w, http.StatusOK, map[string]string{
-		"username": user.Username,
-		"message":  "Login successful",
+	RespondWithJSON(w, http.StatusCreated, database.User{
+		ID:       guest.ID,
+		Username: guest.Username,
 	})
 }

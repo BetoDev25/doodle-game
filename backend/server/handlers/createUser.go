@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -33,7 +34,10 @@ func HandlerCreateUser(w http.ResponseWriter, r *http.Request, db *database.Quer
 	user, err := db.CreateUser(r.Context(), database.CreateUserParams{
 		Username: input.Username,
 		//Email:        input.Email, // To be implented in the future; temporarily "pending@gmail.com"
-		PasswordHash: hashedPassword,
+		PasswordHash: sql.NullString{
+			String: hashedPassword,
+			Valid:  true,
+		},
 	})
 	if err != nil {
 		fmt.Println("CreateUser error:", err)

@@ -153,7 +153,11 @@ function updatePhase(text) {
 }
 
 // ===== Matchmaking =====
-function startMatchmaking() {
+async function startMatchmaking() {
+    if (!window.currentUser) {
+        await getCurrentUser();
+    }
+
     if (!ws || ws.readyState !== WebSocket.OPEN) {
         connectWebSocket();
     }

@@ -20,6 +20,7 @@ func Middleware(db *database.Queries, next http.HandlerFunc) http.HandlerFunc {
 			"/static/",
 			"/",
 			"/game.html",
+			"/api/guests",
 		}
 
 		//check if current path is public

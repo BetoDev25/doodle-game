@@ -321,8 +321,11 @@ func (h *Hub) handleFinishDrawing(client *Client, data []byte) {
 		for userID, strokes := range state.FinishStrokes {
 			userUUID, _ := uuid.Parse(userID)
 			err := h.DB.UpdateDrawingFinished(context.Background(), database.UpdateDrawingFinishedParams{
-				MatchID:         matchID,
-				UserID:          userUUID,
+				MatchID: matchID,
+				UserID: uuid.NullUUID{
+					UUID:  userUUID,
+					Valid: true,
+				},
 				FinishedStrokes: strokes,
 			})
 			if err != nil {

@@ -36,11 +36,6 @@ func main() {
 	// Websocket
 	mux.HandleFunc("/ws", handlers.ServeWebSocket(hub, db))
 
-	// Root route - index.html
-	mux.HandleFunc("/", handlers.Middleware(db, func(w http.ResponseWriter, r *http.Request) {
-		http.FileServer(http.Dir("./static")).ServeHTTP(w, r)
-	}))
-
 	// API routes
 	mux.HandleFunc("POST /api/users", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerCreateUser(w, r, db)
@@ -50,6 +45,12 @@ func main() {
 	})
 	mux.HandleFunc("GET /api/me", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerMe(w, r, db)
+	})
+
+	log.Println("Registering /api/guests route") // ← Add this
+	mux.HandleFunc("POST /api/guests", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("🔥 /api/guests route was hit!") // ← Add this
+		handlers.HandlerCreateGuest(w, r, db, config)
 	})
 
 	/*
@@ -68,6 +69,11 @@ func main() {
 	mux.HandleFunc("POST /api/logout", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerLogoutUser(w, r, db)
 	})
+
+	// Root route - index.html
+	mux.HandleFunc("/", handlers.Middleware(db, func(w http.ResponseWriter, r *http.Request) {
+		http.FileServer(http.Dir("./static")).ServeHTTP(w, r)
+	}))
 
 	log.Println("Server starting on http://localhost:8080")
 	log.Fatal(server.ListenAndServe())

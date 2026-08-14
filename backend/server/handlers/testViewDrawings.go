@@ -40,7 +40,7 @@ func HandlerViewDrawings(w http.ResponseWriter, r *http.Request, db *database.Qu
 	var result []DrawingResponse
 	for _, d := range drawings {
 		result = append(result, DrawingResponse{
-			UserID:          d.UserID.String(),
+			UserID:          d.UserID.UUID.String(),
 			DoodleStrokes:   d.DoodleStrokes,
 			FinishedStrokes: d.FinishedStrokes,
 		})

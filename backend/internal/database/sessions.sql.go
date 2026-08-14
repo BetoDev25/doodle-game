@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -51,7 +52,7 @@ func (q *Queries) DeleteSessionByToken(ctx context.Context, token string) error 
 }
 
 const getUserByCookie = `-- name: GetUserByCookie :one
-SELECT u.id, u.username
+SELECT u.id, u.username, u.is_guest
 FROM sessions s
 JOIN users u ON u.id = s.user_id
 WHERE s.token = $1 AND s.expires_at > NOW()
@@ -60,11 +61,12 @@ WHERE s.token = $1 AND s.expires_at > NOW()
 type GetUserByCookieRow struct {
 	ID       uuid.UUID
 	Username string
+	IsGuest  sql.NullBool
 }
 
 func (q *Queries) GetUserByCookie(ctx context.Context, token string) (GetUserByCookieRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByCookie, token)
 	var i GetUserByCookieRow
-	err := row.Scan(&i.ID, &i.Username)
+	err := row.Scan(&i.ID, &i.Username, &i.IsGuest)
 	return i, err
 }

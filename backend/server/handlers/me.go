@@ -13,6 +13,7 @@ func HandlerMe(w http.ResponseWriter, r *http.Request, db *database.Queries) {
 	type UserInfo struct {
 		ID       uuid.UUID `json:"id"`
 		Username string    `json:"username"`
+		IsGuest  bool      `json:"is_guest"`
 	}
 
 	sessionToken, err := cookies.Read(r, "session_token")
@@ -30,5 +31,6 @@ func HandlerMe(w http.ResponseWriter, r *http.Request, db *database.Queries) {
 	RespondWithJSON(w, http.StatusOK, UserInfo{
 		ID:       user.ID,
 		Username: user.Username,
+		IsGuest:  user.IsGuest.Bool,
 	})
 }
