@@ -20,7 +20,7 @@ RETURNING id, match_id, user_id, doodle_strokes, finished_strokes, vote_count, c
 
 type CreateDrawingParams struct {
 	MatchID         uuid.UUID
-	UserID          uuid.UUID
+	UserID          uuid.NullUUID
 	DoodleStrokes   json.RawMessage
 	FinishedStrokes json.RawMessage
 }
@@ -90,7 +90,7 @@ WHERE match_id = $2 AND user_id = $3
 type UpdateDrawingFinishedParams struct {
 	FinishedStrokes json.RawMessage
 	MatchID         uuid.UUID
-	UserID          uuid.UUID
+	UserID          uuid.NullUUID
 }
 
 func (q *Queries) UpdateDrawingFinished(ctx context.Context, arg UpdateDrawingFinishedParams) error {

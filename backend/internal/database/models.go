@@ -15,7 +15,7 @@ import (
 type Drawing struct {
 	ID              uuid.UUID
 	MatchID         uuid.UUID
-	UserID          uuid.UUID
+	UserID          uuid.NullUUID
 	DoodleStrokes   json.RawMessage
 	FinishedStrokes json.RawMessage
 	VoteCount       sql.NullInt32
@@ -24,8 +24,8 @@ type Drawing struct {
 
 type Match struct {
 	ID         uuid.UUID
-	StarterID  uuid.UUID
-	FinisherID uuid.UUID
+	StarterID  uuid.NullUUID
+	FinisherID uuid.NullUUID
 	CreatedAt  sql.NullTime
 	FinishedAt sql.NullTime
 }
@@ -41,14 +41,16 @@ type User struct {
 	ID           uuid.UUID
 	Username     string
 	Email        string
-	PasswordHash string
+	PasswordHash sql.NullString
 	CreatedAt    sql.NullTime
 	LastActiveAt sql.NullTime
+	IsGuest      sql.NullBool
+	ExpiresAt    sql.NullTime
 }
 
 type Vote struct {
 	ID        uuid.UUID
-	UserID    uuid.UUID
+	UserID    uuid.NullUUID
 	DrawingID uuid.UUID
 	CreatedAt sql.NullTime
 }

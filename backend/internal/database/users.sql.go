@@ -12,14 +12,37 @@ import (
 	"github.com/google/uuid"
 )
 
+const createGuest = `-- name: CreateGuest :one
+INSERT INTO users (username, is_guest, expires_at)
+VALUES (
+    $1,
+    true,
+    NOW() + INTERVAL '24 hours'
+)
+RETURNING id, username
+`
+
+type CreateGuestRow struct {
+	ID       uuid.UUID
+	Username string
+}
+
+func (q *Queries) CreateGuest(ctx context.Context, username string) (CreateGuestRow, error) {
+	row := q.db.QueryRowContext(ctx, createGuest, username)
+	var i CreateGuestRow
+	err := row.Scan(&i.ID, &i.Username)
+	return i, err
+}
+
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (username, email, password_hash, created_at, last_active_at)
+INSERT INTO users (username, email, password_hash, created_at, last_active_at, is_guest)
 VALUES (
     $1,
     $2,
     $3,
 	NOW(),
-    NOW()
+    NOW(),
+    false
 )
 RETURNING id, username, email, created_at
 `
@@ -27,7 +50,7 @@ RETURNING id, username, email, created_at
 type CreateUserParams struct {
 	Username     string
 	Email        string
-	PasswordHash string
+	PasswordHash sql.NullString
 }
 
 type CreateUserRow struct {
@@ -50,7 +73,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, username, email, password_hash, created_at, last_active_at
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at
 FROM users
 WHERE email = $1
 `
@@ -65,12 +88,14 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.PasswordHash,
 		&i.CreatedAt,
 		&i.LastActiveAt,
+		&i.IsGuest,
+		&i.ExpiresAt,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, email, password_hash, created_at, last_active_at
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at
 FROM users
 WHERE username = $1
 `
@@ -85,6 +110,8 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.PasswordHash,
 		&i.CreatedAt,
 		&i.LastActiveAt,
+		&i.IsGuest,
+		&i.ExpiresAt,
 	)
 	return i, err
 }

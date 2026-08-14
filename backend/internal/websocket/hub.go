@@ -184,9 +184,15 @@ func (h *Hub) createMatch(p1, p2 *Client) {
 
 	// Create match in Database
 	_, err := h.DB.CreateMatch(context.Background(), database.CreateMatchParams{
-		ID:         matchUUID,
-		StarterID:  starterUUID,
-		FinisherID: finisherUUID,
+		ID: matchUUID,
+		StarterID: uuid.NullUUID{
+			UUID:  starterUUID,
+			Valid: true,
+		},
+		FinisherID: uuid.NullUUID{
+			UUID:  finisherUUID,
+			Valid: true,
+		},
 	})
 	if err != nil {
 		log.Printf("Error creating match in DB: %v", err)
@@ -248,8 +254,11 @@ func (h *Hub) handleDoodleComplete(client *Client, data []byte) {
 		for userID, strokes := range state.DoodleStrokes {
 			userUUID, _ := uuid.Parse(userID)
 			_, err := h.DB.CreateDrawing(context.Background(), database.CreateDrawingParams{
-				MatchID:         matchID,
-				UserID:          userUUID,
+				MatchID: matchID,
+				UserID: uuid.NullUUID{
+					UUID:  userUUID,
+					Valid: true,
+				},
 				DoodleStrokes:   strokes,
 				FinishedStrokes: json.RawMessage(`[]`), // ← Add this
 			})

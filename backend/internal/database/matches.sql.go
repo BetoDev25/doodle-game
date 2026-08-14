@@ -19,8 +19,8 @@ RETURNING id, starter_id, finisher_id, created_at, finished_at
 
 type CreateMatchParams struct {
 	ID         uuid.UUID
-	StarterID  uuid.UUID
-	FinisherID uuid.UUID
+	StarterID  uuid.NullUUID
+	FinisherID uuid.NullUUID
 }
 
 func (q *Queries) CreateMatch(ctx context.Context, arg CreateMatchParams) (Match, error) {
