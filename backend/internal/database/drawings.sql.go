@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 
 	"github.com/google/uuid"
@@ -68,6 +69,48 @@ func (q *Queries) GetDrawingsByMatchID(ctx context.Context, matchID uuid.UUID) (
 			&i.VoteCount,
 			&i.CreatedAt,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDrawingsByUserID = `-- name: GetDrawingsByUserID :many
+SELECT match_id, finished_strokes, created_at
+FROM drawings
+WHERE user_id = $1
+ORDER BY created_at DESC
+LIMIT 20 OFFSET $2
+`
+
+type GetDrawingsByUserIDParams struct {
+	UserID uuid.NullUUID
+	Offset int32
+}
+
+type GetDrawingsByUserIDRow struct {
+	MatchID         uuid.UUID
+	FinishedStrokes json.RawMessage
+	CreatedAt       sql.NullTime
+}
+
+func (q *Queries) GetDrawingsByUserID(ctx context.Context, arg GetDrawingsByUserIDParams) ([]GetDrawingsByUserIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getDrawingsByUserID, arg.UserID, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDrawingsByUserIDRow
+	for rows.Next() {
+		var i GetDrawingsByUserIDRow
+		if err := rows.Scan(&i.MatchID, &i.FinishedStrokes, &i.CreatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
