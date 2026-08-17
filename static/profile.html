@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Profile</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/taskbar.css">
+</head>
+<body>
+    <nav id="taskbar"></nav>
+
+    <div id="profile-container">
+        <!-- Profile Info Section -->
+        <div id="profile-header">
+            <div id="avatar-container">
+                <canvas id="avatarCanvas" width="120" height="120"></canvas>
+            </div>
+            <div id="profile-info">
+                <h1 id="profile-username"></h1>
+                <p id="profile-created"></p>
+            </div>
+        </div>
+
+        <!-- Drawings Section -->
+        <div id="drawings-section">
+            <h2>My Drawings</h2>
+            <div id="drawings-grid"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jdenticon@3.3.0/dist/jdenticon.min.js"></script>
+    <script src="/js/taskbar.js"></script>
+    <script src="/js/profile.js"></script>
+</body>
+</html>

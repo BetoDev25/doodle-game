@@ -1,21 +1,23 @@
 -- name: CreateUser :one
-INSERT INTO users (username, email, password_hash, created_at, last_active_at, is_guest)
+INSERT INTO users (username, email, password_hash, created_at, last_active_at, is_guest, profile_strokes)
 VALUES (
     $1,
     $2,
     $3,
 	NOW(),
     NOW(),
-    false
+    false,
+    $4
 )
 RETURNING id, username, email, created_at;
 
 -- name: CreateGuest :one
-INSERT INTO users (username, is_guest, expires_at)
+INSERT INTO users (username, is_guest, expires_at, profile_strokes)
 VALUES (
     $1,
     true,
-    NOW() + INTERVAL '24 hours'
+    NOW() + INTERVAL '24 hours',
+    $2
 )
 RETURNING id, username;
 

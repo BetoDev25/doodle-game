@@ -10,47 +10,56 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
 
 const createGuest = `-- name: CreateGuest :one
-INSERT INTO users (username, is_guest, expires_at)
+INSERT INTO users (username, is_guest, expires_at, profile_strokes)
 VALUES (
     $1,
     true,
-    NOW() + INTERVAL '24 hours'
+    NOW() + INTERVAL '24 hours',
+    $2
 )
 RETURNING id, username
 `
+
+type CreateGuestParams struct {
+	Username       string
+	ProfileStrokes pqtype.NullRawMessage
+}
 
 type CreateGuestRow struct {
 	ID       uuid.UUID
 	Username string
 }
 
-func (q *Queries) CreateGuest(ctx context.Context, username string) (CreateGuestRow, error) {
-	row := q.db.QueryRowContext(ctx, createGuest, username)
+func (q *Queries) CreateGuest(ctx context.Context, arg CreateGuestParams) (CreateGuestRow, error) {
+	row := q.db.QueryRowContext(ctx, createGuest, arg.Username, arg.ProfileStrokes)
 	var i CreateGuestRow
 	err := row.Scan(&i.ID, &i.Username)
 	return i, err
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (username, email, password_hash, created_at, last_active_at, is_guest)
+INSERT INTO users (username, email, password_hash, created_at, last_active_at, is_guest, profile_strokes)
 VALUES (
     $1,
     $2,
     $3,
 	NOW(),
     NOW(),
-    false
+    false,
+    $4
 )
 RETURNING id, username, email, created_at
 `
 
 type CreateUserParams struct {
-	Username     string
-	Email        string
-	PasswordHash sql.NullString
+	Username       string
+	Email          string
+	PasswordHash   sql.NullString
+	ProfileStrokes pqtype.NullRawMessage
 }
 
 type CreateUserRow struct {
@@ -61,7 +70,12 @@ type CreateUserRow struct {
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Username, arg.Email, arg.PasswordHash)
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.Username,
+		arg.Email,
+		arg.PasswordHash,
+		arg.ProfileStrokes,
+	)
 	var i CreateUserRow
 	err := row.Scan(
 		&i.ID,
@@ -73,7 +87,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, profile_strokes
 FROM users
 WHERE email = $1
 `
@@ -90,12 +104,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.LastActiveAt,
 		&i.IsGuest,
 		&i.ExpiresAt,
+		&i.ProfileStrokes,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, profile_strokes
 FROM users
 WHERE username = $1
 `
@@ -112,6 +127,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.LastActiveAt,
 		&i.IsGuest,
 		&i.ExpiresAt,
+		&i.ProfileStrokes,
 	)
 	return i, err
 }

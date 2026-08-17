@@ -8,6 +8,7 @@ import (
 
 	"github.com/BetoDev25/doodle-game/backend/internal/auth"
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
+	"github.com/sqlc-dev/pqtype"
 )
 
 func HandlerCreateUser(w http.ResponseWriter, r *http.Request, db *database.Queries) {
@@ -31,6 +32,12 @@ func HandlerCreateUser(w http.ResponseWriter, r *http.Request, db *database.Quer
 		return
 	}
 
+	defaultAvatar := GenerateDefaultAvatar()
+	avatar := pqtype.NullRawMessage{
+		RawMessage: defaultAvatar,
+		Valid:      true,
+	}
+
 	user, err := db.CreateUser(r.Context(), database.CreateUserParams{
 		Username: input.Username,
 		//Email:        input.Email, // To be implented in the future; temporarily "pending@gmail.com"
@@ -38,6 +45,7 @@ func HandlerCreateUser(w http.ResponseWriter, r *http.Request, db *database.Quer
 			String: hashedPassword,
 			Valid:  true,
 		},
+		ProfileStrokes: avatar,
 	})
 	if err != nil {
 		fmt.Println("CreateUser error:", err)

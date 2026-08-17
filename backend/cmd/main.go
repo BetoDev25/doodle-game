@@ -33,6 +33,10 @@ func main() {
 
 	// END OF TEST - TEMPORARY
 
+	mux.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/profile.html")
+	})
+
 	// Websocket
 	mux.HandleFunc("/ws", handlers.ServeWebSocket(hub, db))
 
@@ -46,10 +50,11 @@ func main() {
 	mux.HandleFunc("GET /api/me", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerMe(w, r, db)
 	})
+	mux.HandleFunc("GET /api/drawings", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetDrawings(w, r, db)
+	})
 
-	log.Println("Registering /api/guests route") // ← Add this
 	mux.HandleFunc("POST /api/guests", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("🔥 /api/guests route was hit!") // ← Add this
 		handlers.HandlerCreateGuest(w, r, db, config)
 	})
 

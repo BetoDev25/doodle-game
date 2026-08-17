@@ -10,6 +10,7 @@ import (
 	"github.com/BetoDev25/doodle-game/backend/internal/auth"
 	"github.com/BetoDev25/doodle-game/backend/internal/cookies"
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
+	"github.com/sqlc-dev/pqtype"
 )
 
 func HandlerCreateGuest(w http.ResponseWriter, r *http.Request, db *database.Queries, cfg config.Config) {
@@ -31,7 +32,16 @@ func HandlerCreateGuest(w http.ResponseWriter, r *http.Request, db *database.Que
 		return
 	}
 
-	guest, err := db.CreateGuest(r.Context(), username)
+	defaultAvatar := GenerateDefaultAvatar()
+	avatar := pqtype.NullRawMessage{
+		RawMessage: defaultAvatar,
+		Valid:      true,
+	}
+
+	guest, err := db.CreateGuest(r.Context(), database.CreateGuestParams{
+		Username:       username,
+		ProfileStrokes: avatar,
+	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Couldn't create guest", err)
 		return
