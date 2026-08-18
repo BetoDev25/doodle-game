@@ -17,6 +17,7 @@ func HandlerMe(w http.ResponseWriter, r *http.Request, db *database.Queries) {
 		Username  string    `json:"username"`
 		IsGuest   bool      `json:"is_guest"`
 		CreatedAt time.Time `json:"created_at"`
+		Bio       string    `json:"bio"`
 	}
 
 	sessionToken, err := cookies.Read(r, "session_token")
@@ -38,5 +39,6 @@ func HandlerMe(w http.ResponseWriter, r *http.Request, db *database.Queries) {
 		Username:  user.Username,
 		IsGuest:   user.IsGuest.Bool,
 		CreatedAt: user.CreatedAt.Time,
+		Bio:       user.Bio,
 	})
 }

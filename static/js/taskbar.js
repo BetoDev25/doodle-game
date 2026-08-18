@@ -12,6 +12,7 @@ async function getCurrentUser() {
             username: user.username,
             isGuest: user.is_guest,
             created_at: user.created_at,
+            bio: user.bio
         };
         renderTaskbar();
         return window.currentUser;

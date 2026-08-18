@@ -33,14 +33,24 @@ func HandlerViewDrawings(w http.ResponseWriter, r *http.Request, db *database.Qu
 	// Build response
 	type DrawingResponse struct {
 		UserID          string          `json:"user_id"`
+		Username        string          `json:"username"`
 		DoodleStrokes   json.RawMessage `json:"doodle_strokes"`
 		FinishedStrokes json.RawMessage `json:"finished_strokes"`
 	}
 
 	var result []DrawingResponse
 	for _, d := range drawings {
+		username := "Deleted User"
+		if d.UserID.Valid {
+			user, err := db.GetUserByID(r.Context(), d.UserID.UUID)
+			if err == nil {
+				username = user.Username
+			}
+		}
+
 		result = append(result, DrawingResponse{
 			UserID:          d.UserID.UUID.String(),
+			Username:        username,
 			DoodleStrokes:   d.DoodleStrokes,
 			FinishedStrokes: d.FinishedStrokes,
 		})

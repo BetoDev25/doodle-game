@@ -87,7 +87,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, profile_strokes
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, profile_strokes, bio
 FROM users
 WHERE email = $1
 `
@@ -105,12 +105,37 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.IsGuest,
 		&i.ExpiresAt,
 		&i.ProfileStrokes,
+		&i.Bio,
+	)
+	return i, err
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, profile_strokes, bio
+FROM users
+WHERE id = $1
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.LastActiveAt,
+		&i.IsGuest,
+		&i.ExpiresAt,
+		&i.ProfileStrokes,
+		&i.Bio,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, profile_strokes
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, profile_strokes, bio
 FROM users
 WHERE username = $1
 `
@@ -128,6 +153,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.IsGuest,
 		&i.ExpiresAt,
 		&i.ProfileStrokes,
+		&i.Bio,
 	)
 	return i, err
 }

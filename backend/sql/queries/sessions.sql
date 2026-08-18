@@ -9,7 +9,7 @@ VALUES (
 RETURNING *;
 
 -- name: GetUserByCookie :one
-SELECT u.id, u.username, u.is_guest, u.created_at
+SELECT u.id, u.username, u.is_guest, u.created_at, u.bio
 FROM sessions s
 JOIN users u ON u.id = s.user_id
 WHERE s.token = $1 AND s.expires_at > NOW();

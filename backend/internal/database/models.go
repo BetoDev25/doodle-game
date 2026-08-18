@@ -48,6 +48,7 @@ type User struct {
 	IsGuest        sql.NullBool
 	ExpiresAt      sql.NullTime
 	ProfileStrokes pqtype.NullRawMessage
+	Bio            string
 }
 
 type Vote struct {
