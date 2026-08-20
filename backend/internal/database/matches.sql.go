@@ -35,3 +35,12 @@ func (q *Queries) CreateMatch(ctx context.Context, arg CreateMatchParams) (Match
 	)
 	return i, err
 }
+
+const deleteMatchByID = `-- name: DeleteMatchByID :exec
+DELETE FROM matches WHERE id = $1
+`
+
+func (q *Queries) DeleteMatchByID(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteMatchByID, id)
+	return err
+}

@@ -46,6 +46,17 @@ type FinishDrawingMessage struct {
 	Strokes json.RawMessage `json:"strokes"`
 }
 
+// Client -> Server
+type ReadyForResultsMessage struct {
+	MatchID string `json:"match_id"`
+	Ready   bool   `json:"ready"`
+}
+
+// Server -> Client
+type PartnerDisconnectedMessage struct {
+	Message string `json:"message"`
+}
+
 func createMatchFoundMessage(matchID, role string) []byte {
 	msg := Message{
 		Type: "match_found",
@@ -79,6 +90,17 @@ func createMatchCompleteMessage(matchID string, yourDrawing, theirDrawing json.R
 		YourDrawing:  yourDrawing,
 		TheirDrawing: theirDrawing,
 		Message:      message,
+	})
+	result, _ := json.Marshal(msg)
+	return result
+}
+
+func createPartnerDisconnectedMessage() []byte {
+	msg := Message{
+		Type: "partner_disconnected",
+	}
+	msg.Data, _ = json.Marshal(PartnerDisconnectedMessage{
+		Message: "Your partner has disconnected",
 	})
 	result, _ := json.Marshal(msg)
 	return result

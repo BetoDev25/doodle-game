@@ -14,7 +14,9 @@
 
 ## Game
 1. (As Guest) Option to create account and save drawing immediately after a match
-2. "Submit drawing" button.
+~~2. "Submit drawing" button that prevents drawing and can be un-pressed.~~
+3. Vote for opponent's drawing
+4. Fix issue where incomplete games get archived.
 
 ## Profile
 ~~1. Click drawings to view match info~~

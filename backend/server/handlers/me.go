@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"time"
 
@@ -31,8 +30,6 @@ func HandlerMe(w http.ResponseWriter, r *http.Request, db *database.Queries) {
 		RespondWithError(w, http.StatusUnauthorized, "Invalid or expired session", err)
 		return
 	}
-
-	log.Printf("CreatedAt Valid: %v, Time: %v", user.CreatedAt.Valid, user.CreatedAt.Time)
 
 	RespondWithJSON(w, http.StatusOK, UserInfo{
 		ID:        user.ID,

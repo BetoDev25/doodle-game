@@ -46,6 +46,15 @@ func (q *Queries) CreateDrawing(ctx context.Context, arg CreateDrawingParams) (D
 	return i, err
 }
 
+const deleteDrawingByMatchID = `-- name: DeleteDrawingByMatchID :exec
+DELETE FROM drawings WHERE match_id = $1
+`
+
+func (q *Queries) DeleteDrawingByMatchID(ctx context.Context, matchID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteDrawingByMatchID, matchID)
+	return err
+}
+
 const getDrawingsByMatchID = `-- name: GetDrawingsByMatchID :many
 SELECT id, match_id, user_id, doodle_strokes, finished_strokes, vote_count, created_at FROM drawings
 WHERE match_id = $1
@@ -111,6 +120,94 @@ func (q *Queries) GetDrawingsByUserID(ctx context.Context, arg GetDrawingsByUser
 	for rows.Next() {
 		var i GetDrawingsByUserIDRow
 		if err := rows.Scan(&i.MatchID, &i.FinishedStrokes, &i.CreatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMostRecentDrawings = `-- name: GetMostRecentDrawings :many
+SELECT id, match_id, user_id, doodle_strokes, finished_strokes, vote_count, created_at
+FROM drawings
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type GetMostRecentDrawingsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) GetMostRecentDrawings(ctx context.Context, arg GetMostRecentDrawingsParams) ([]Drawing, error) {
+	rows, err := q.db.QueryContext(ctx, getMostRecentDrawings, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Drawing
+	for rows.Next() {
+		var i Drawing
+		if err := rows.Scan(
+			&i.ID,
+			&i.MatchID,
+			&i.UserID,
+			&i.DoodleStrokes,
+			&i.FinishedStrokes,
+			&i.VoteCount,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMostVotedDrawings = `-- name: GetMostVotedDrawings :many
+SELECT id, match_id, user_id, doodle_strokes, finished_strokes, vote_count, created_at
+FROM drawings
+WHERE created_at > NOW() - INTERVAL '1 day' * $3
+ORDER BY vote_count DESC, created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type GetMostVotedDrawingsParams struct {
+	Limit         int32
+	Offset        int32
+	TimeframeDays interface{}
+}
+
+func (q *Queries) GetMostVotedDrawings(ctx context.Context, arg GetMostVotedDrawingsParams) ([]Drawing, error) {
+	rows, err := q.db.QueryContext(ctx, getMostVotedDrawings, arg.Limit, arg.Offset, arg.TimeframeDays)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Drawing
+	for rows.Next() {
+		var i Drawing
+		if err := rows.Scan(
+			&i.ID,
+			&i.MatchID,
+			&i.UserID,
+			&i.DoodleStrokes,
+			&i.FinishedStrokes,
+			&i.VoteCount,
+			&i.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

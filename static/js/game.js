@@ -79,6 +79,7 @@ function showDrawingScreen() {
                         <div id="timerDisplay">⏱️ 10s</div>
                     </div>
                     <div id="phaseDisplay">Draw something!</div>
+                    <button id="readyBtn" style="display:none;">✅ Finished Drawing</button>
                 </section>
 
                 <section class="drawing-board">
@@ -125,6 +126,9 @@ function handleMessage(msg) {
             break;
         case 'match_complete':
             handleMatchComplete(msg.data);
+            break;
+        case 'partner_disconnected':
+            handlePartnerDisconnected();
             break;
     }
 }
@@ -196,6 +200,31 @@ function handleMatchFound(data) {
     startDoodlePhase(10);
 }
 
+function handlePartnerDisconnected() {
+    clearInterval(gameInterval);
+    
+    document.getElementById('game-screen').innerHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <h2>😔 Your partner has disconnected</h2>
+                <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+                    <button id="rematchBtn" class="btn-primary">Find Another Match</button>
+                    <button id="homeBtn" class="btn-secondary">Return Home</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('rematchBtn').addEventListener('click', () => {
+        showLobbyScreen();
+        startMatchmaking();
+    });
+    
+    document.getElementById('homeBtn').addEventListener('click', () => {
+        window.location.href = '/';
+    });
+}
+
 // ===== Doodle Phase =====
 function startDoodlePhase(duration) {
     gameState.phase = 'doodle';
@@ -240,6 +269,44 @@ function startFinishPhase(duration) {
     updatePhase('✏️ Complete the drawing!');
     updateTimer(duration);
 
+// === Ready button logic ===
+let isReady = false;
+const readyBtn = document.getElementById('readyBtn');
+
+// Show and reset button
+readyBtn.style.display = 'block';
+readyBtn.classList.remove('ready');
+readyBtn.innerHTML = `
+    <span class="empty-box">☐</span>
+    <span class="checkmark">✓</span>
+    Finished Drawing
+`;
+
+readyBtn.onclick = function() {
+    isReady = !isReady;
+    if (isReady) {
+        readyBtn.classList.add('ready');
+        ws.send(JSON.stringify({
+            type: 'ready_for_results',
+            data: {
+                match_id: matchID,
+                ready: true
+            }
+        }));
+        submitFinishedDrawing();
+    } else {
+        readyBtn.classList.remove('ready');
+        ws.send(JSON.stringify({
+            type: 'ready_for_results',
+            data: {
+                match_id: matchID,
+                ready: false
+            }
+        }));
+    }
+};
+// === End Of Ready button logic ===
+
     strokes = opponentDoodle ? JSON.parse(JSON.stringify(opponentDoodle)) : [];
     
     clearInterval(gameInterval);
@@ -249,6 +316,15 @@ function startFinishPhase(duration) {
         
         if (gameState.timer <= 0) {
             clearInterval(gameInterval);
+            isReady = true;
+            readyBtn.style.display = 'none';
+            ws.send(JSON.stringify({
+                type: 'ready_for_results',
+                data: {
+                    match_id: matchID,
+                    ready: true
+                }
+            }));
             submitFinishedDrawing();
         }
     }, 1000);
@@ -264,7 +340,10 @@ function submitFinishedDrawing() {
             strokes: strokes
         }
     }));
+    console.log('📤 finish_drawing sent');
 }
+
+
 
 // ===== Match Complete =====
 function handleMatchComplete(data) {

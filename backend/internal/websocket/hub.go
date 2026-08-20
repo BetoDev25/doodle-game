@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"sync"
-	"time"
 
 	"github.com/google/uuid"
 
@@ -31,10 +30,11 @@ type Hub struct {
 }
 
 type MatchState struct {
-	DoodleComplete map[string]bool
-	DoodleStrokes  map[string][]byte
-	FinishComplete map[string]bool
-	FinishStrokes  map[string][]byte
+	DoodleComplete  map[string]bool
+	DoodleStrokes   map[string][]byte
+	FinishComplete  map[string]bool
+	FinishStrokes   map[string][]byte
+	ReadyForResults map[string]bool
 }
 
 func NewHub(db *database.Queries) *Hub {
@@ -68,6 +68,13 @@ func (h *Hub) Run() {
 				h.removeFromQueue(client)
 
 				if client.MatchID != "" {
+					matchID := client.MatchID
+					log.Printf("matchID: %s", matchID) // DEBUG
+
+					h.notifyPartnerDisconnected(matchID, client.UserID)
+					log.Printf("deleteIncompleteMatch called!!!") // DEBUG
+					h.deleteIncompleteMatch(matchID)
+					log.Printf("removeFromRoom called!!!") // DEBUG
 					h.removeFromRoom(client)
 				}
 
@@ -88,12 +95,15 @@ func (h *Hub) removeFromQueue(client *Client) {
 }
 
 func (h *Hub) removeFromRoom(client *Client) {
+	log.Printf("removeFromRoom: MatchID is empty for %s", client.UserID) // DEBUG
 	if client.MatchID == "" {
+		log.Printf("MatchID is empty: %s", client.MatchID)
 		return
 	}
 
 	clients, ok := h.Rooms[client.MatchID]
 	if !ok {
+		log.Printf("removeFromRoom: Room not found for %s", client.MatchID) // DEBUG
 		return
 	}
 
@@ -128,6 +138,8 @@ func (h *Hub) HandleMessage(client *Client, message []byte) {
 		h.handleDoodleComplete(client, msg.Data)
 	case "finish_drawing":
 		h.handleFinishDrawing(client, msg.Data)
+	case "ready_for_results":
+		h.handleReadyForResults(client, msg.Data)
 	default:
 		log.Printf("Unknown message type: %s", msg.Type)
 	}
@@ -202,10 +214,11 @@ func (h *Hub) createMatch(p1, p2 *Client) {
 	// Create match in memory
 	h.Rooms[matchID] = []*Client{p1, p2}
 	h.MatchStates[matchID] = &MatchState{
-		DoodleComplete: make(map[string]bool),
-		DoodleStrokes:  make(map[string][]byte),
-		FinishComplete: make(map[string]bool),
-		FinishStrokes:  make(map[string][]byte),
+		DoodleComplete:  make(map[string]bool),
+		DoodleStrokes:   make(map[string][]byte),
+		FinishComplete:  make(map[string]bool),
+		FinishStrokes:   make(map[string][]byte),
+		ReadyForResults: make(map[string]bool),
 	}
 
 	p1.MatchID = matchID
@@ -224,6 +237,43 @@ func (h *Hub) createMatch(p1, p2 *Client) {
 	}
 
 	log.Printf("Match created: %s", matchID)
+}
+
+func (h *Hub) notifyPartnerDisconnected(matchID string, disconnectedUserID string) {
+	log.Printf("currently inside notifyPartner") // DEBUG
+
+	room, ok := h.Rooms[matchID]
+	if !ok {
+		log.Printf("Room %s NOT FOUND in Rooms map!", matchID) // DEBUG
+		return
+	}
+	log.Printf("Room found, has %d clients", len(room)) // DEBUG
+
+	for _, c := range room {
+		if c.UserID != disconnectedUserID {
+			c.Send <- createPartnerDisconnectedMessage()
+			break
+		}
+	}
+	log.Printf("we are done with notifyPartner") // DEBUG
+}
+
+func (h *Hub) deleteIncompleteMatch(matchID string) {
+	matchUUID, err := uuid.Parse(matchID)
+	if err != nil {
+		log.Printf("Error parsing match ID for deletion: %v", err)
+		return
+	}
+
+	err = h.DB.DeleteDrawingByMatchID(context.Background(), matchUUID)
+	if err != nil {
+		log.Printf("Error deleting incomplete drawing: %v", err)
+	}
+
+	err = h.DB.DeleteMatchByID(context.Background(), matchUUID)
+	if err != nil {
+		log.Printf("Error deleting incomplete match: %v", err)
+	}
 }
 
 // handleDoodleComplete handles the doodle phase completion
@@ -374,7 +424,64 @@ func (h *Hub) handleFinishDrawing(client *Client, data []byte) {
 	}
 }
 
-// generateMatchID creates a unique match ID
-func generateMatchID() string {
-	return "match_" + time.Now().Format("20060102150405") + "_" + randomString(6)
+func (h *Hub) handleReadyForResults(client *Client, data []byte) {
+	var readyData ReadyForResultsMessage
+	if err := json.Unmarshal(data, &readyData); err != nil {
+		log.Printf("Error parsing ready data: %v", err)
+		return
+	}
+
+	h.Mu.Lock()
+	defer h.Mu.Unlock()
+
+	state, ok := h.MatchStates[client.MatchID]
+	if !ok {
+		log.Printf("Match state not found: %s", client.MatchID)
+		return
+	}
+
+	state.ReadyForResults[client.UserID] = readyData.Ready
+
+	// Check if both ready and both finished
+	if len(state.ReadyForResults) == 2 && len(state.FinishComplete) == 2 {
+		allReady := true
+		for _, ready := range state.ReadyForResults {
+			if !ready {
+				allReady = false
+				break
+			}
+		}
+		if allReady {
+			// Send results to both players (same code as handleFinishDrawing)
+			var players []*Client
+			for _, c := range h.Rooms[client.MatchID] {
+				players = append(players, c)
+			}
+
+			for _, p := range players {
+				var yourDrawing, theirDrawing []byte
+				yourDrawing = state.FinishStrokes[p.UserID]
+				for userID, strokes := range state.FinishStrokes {
+					if userID != p.UserID {
+						theirDrawing = strokes
+						break
+					}
+				}
+				p.Send <- createMatchCompleteMessage(
+					client.MatchID,
+					yourDrawing,
+					theirDrawing,
+					"Match complete!",
+				)
+			}
+
+			// Clean up
+			for _, p := range players {
+				p.MatchID = ""
+			}
+			delete(h.Rooms, client.MatchID)
+			delete(h.MatchStates, client.MatchID)
+			log.Printf("Match completed (ready button): %s", client.MatchID)
+		}
+	}
 }
