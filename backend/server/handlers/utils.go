@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 
@@ -70,4 +71,22 @@ func GenerateDefaultAvatar() json.RawMessage {
 
 	data, _ := json.Marshal(strokes)
 	return json.RawMessage(data)
+}
+
+func GenerateAvatarPath() string {
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	// Generate 6 characters
+	firstPart := make([]byte, 6)
+	for i := range firstPart {
+		firstPart[i] = charset[rand.Intn(len(charset))]
+	}
+
+	// Generate 3 characters
+	secondPart := make([]byte, 3)
+	for i := range secondPart {
+		secondPart[i] = charset[rand.Intn(len(charset))]
+	}
+
+	return fmt.Sprintf("%s-%s", string(firstPart), string(secondPart))
 }

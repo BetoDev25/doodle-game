@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -10,7 +11,6 @@ import (
 	"github.com/BetoDev25/doodle-game/backend/internal/auth"
 	"github.com/BetoDev25/doodle-game/backend/internal/cookies"
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
-	"github.com/sqlc-dev/pqtype"
 )
 
 func HandlerCreateGuest(w http.ResponseWriter, r *http.Request, db *database.Queries, cfg config.Config) {
@@ -32,15 +32,13 @@ func HandlerCreateGuest(w http.ResponseWriter, r *http.Request, db *database.Que
 		return
 	}
 
-	defaultAvatar := GenerateDefaultAvatar()
-	avatar := pqtype.NullRawMessage{
-		RawMessage: defaultAvatar,
-		Valid:      true,
-	}
-
+	// Remove profile_strokes - guests get default avatar path
 	guest, err := db.CreateGuest(r.Context(), database.CreateGuestParams{
-		Username:       username,
-		ProfileStrokes: avatar,
+		Username: username,
+		AvatarPath: sql.NullString{
+			String: "/avatars/default.png",
+			Valid:  true,
+		},
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Couldn't create guest", err)
@@ -83,8 +81,10 @@ func HandlerCreateGuest(w http.ResponseWriter, r *http.Request, db *database.Que
 		return
 	}
 
-	RespondWithJSON(w, http.StatusCreated, database.User{
-		ID:       guest.ID,
-		Username: guest.Username,
+	RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
+		"id":          guest.ID,
+		"username":    guest.Username,
+		"avatar_path": guest.AvatarPath.String,
+		"isGuest":     true,
 	})
 }

@@ -10,39 +10,39 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
 )
 
 const createGuest = `-- name: CreateGuest :one
-INSERT INTO users (username, is_guest, expires_at, profile_strokes)
+INSERT INTO users (username, is_guest, expires_at, avatar_path)
 VALUES (
     $1,
     true,
     NOW() + INTERVAL '24 hours',
     $2
 )
-RETURNING id, username
+RETURNING id, username, avatar_path
 `
 
 type CreateGuestParams struct {
-	Username       string
-	ProfileStrokes pqtype.NullRawMessage
+	Username   string
+	AvatarPath sql.NullString
 }
 
 type CreateGuestRow struct {
-	ID       uuid.UUID
-	Username string
+	ID         uuid.UUID
+	Username   string
+	AvatarPath sql.NullString
 }
 
 func (q *Queries) CreateGuest(ctx context.Context, arg CreateGuestParams) (CreateGuestRow, error) {
-	row := q.db.QueryRowContext(ctx, createGuest, arg.Username, arg.ProfileStrokes)
+	row := q.db.QueryRowContext(ctx, createGuest, arg.Username, arg.AvatarPath)
 	var i CreateGuestRow
-	err := row.Scan(&i.ID, &i.Username)
+	err := row.Scan(&i.ID, &i.Username, &i.AvatarPath)
 	return i, err
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (username, email, password_hash, created_at, last_active_at, is_guest, profile_strokes)
+INSERT INTO users (username, email, password_hash, created_at, last_active_at, is_guest, avatar_path)
 VALUES (
     $1,
     $2,
@@ -52,21 +52,22 @@ VALUES (
     false,
     $4
 )
-RETURNING id, username, email, created_at
+RETURNING id, username, email, created_at, avatar_path
 `
 
 type CreateUserParams struct {
-	Username       string
-	Email          string
-	PasswordHash   sql.NullString
-	ProfileStrokes pqtype.NullRawMessage
+	Username     string
+	Email        string
+	PasswordHash sql.NullString
+	AvatarPath   sql.NullString
 }
 
 type CreateUserRow struct {
-	ID        uuid.UUID
-	Username  string
-	Email     string
-	CreatedAt sql.NullTime
+	ID         uuid.UUID
+	Username   string
+	Email      string
+	CreatedAt  sql.NullTime
+	AvatarPath sql.NullString
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
@@ -74,7 +75,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		arg.Username,
 		arg.Email,
 		arg.PasswordHash,
-		arg.ProfileStrokes,
+		arg.AvatarPath,
 	)
 	var i CreateUserRow
 	err := row.Scan(
@@ -82,12 +83,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		&i.Username,
 		&i.Email,
 		&i.CreatedAt,
+		&i.AvatarPath,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, profile_strokes, bio
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, avatar_path, bio
 FROM users
 WHERE email = $1
 `
@@ -104,14 +106,14 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.LastActiveAt,
 		&i.IsGuest,
 		&i.ExpiresAt,
-		&i.ProfileStrokes,
+		&i.AvatarPath,
 		&i.Bio,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, profile_strokes, bio
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, avatar_path, bio
 FROM users
 WHERE id = $1
 `
@@ -128,14 +130,14 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.LastActiveAt,
 		&i.IsGuest,
 		&i.ExpiresAt,
-		&i.ProfileStrokes,
+		&i.AvatarPath,
 		&i.Bio,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, profile_strokes, bio
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, avatar_path, bio
 FROM users
 WHERE username = $1
 `
@@ -152,10 +154,26 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.LastActiveAt,
 		&i.IsGuest,
 		&i.ExpiresAt,
-		&i.ProfileStrokes,
+		&i.AvatarPath,
 		&i.Bio,
 	)
 	return i, err
+}
+
+const updateAvatar = `-- name: UpdateAvatar :exec
+UPDATE users
+SET avatar_path = $1
+WHERE id = $2
+`
+
+type UpdateAvatarParams struct {
+	AvatarPath sql.NullString
+	ID         uuid.UUID
+}
+
+func (q *Queries) UpdateAvatar(ctx context.Context, arg UpdateAvatarParams) error {
+	_, err := q.db.ExecContext(ctx, updateAvatar, arg.AvatarPath, arg.ID)
+	return err
 }
 
 const updateLastActive = `-- name: UpdateLastActive :exec

@@ -16,16 +16,16 @@
 1. (As Guest) Option to create account and save drawing immediately after a match
 ~~2. "Submit drawing" button that prevents drawing and can be un-pressed.~~
 3. Vote for opponent's drawing
-4. Fix issue where incomplete games get archived.
+~~4. Fix issue where incomplete games get archived.~~
 
 ## Profile
 ~~1. Click drawings to view match info~~
     ~~a. Should display partner's drawing~~
     ~~b. Should display partner's username or "User Deleted"~~
 
-2. Edit profile with canvas
-3. Save drawings as PNG
-~~4. User bios~~
+2. Save drawings as PNG
+~~3. User bios~~
+~~4. Upload/Update avatar as png/jpg~~
 
     ~~a. Display bio~~
 5. Edit page that allows you to change bio, display name, email, etc.

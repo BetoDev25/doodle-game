@@ -14,6 +14,7 @@ type Config struct {
 	CookieDomain   string
 	CookieSecure   bool
 	CookieSameSite http.SameSite
+	AvatarDir      string
 }
 
 func SetupConfig(env string) Config {
@@ -51,10 +52,16 @@ func SetupConfig(env string) Config {
 		cookieSameSite = http.SameSiteNoneMode
 	}
 
+	avatarDir := os.Getenv("AVATAR_DIR")
+	if avatarDir == "" {
+		avatarDir = "./static/avatars/" // Local dev - replace this in the future
+	}
+
 	config := &Config{
 		CookieDomain:   cookieDomain,
 		CookieSecure:   cookieSecure,
 		CookieSameSite: cookieSameSite,
+		AvatarDir:      avatarDir,
 	}
 
 	return *config

@@ -53,9 +53,14 @@ func main() {
 	mux.HandleFunc("GET /api/drawings", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetDrawings(w, r, db)
 	})
-
 	mux.HandleFunc("POST /api/guests", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerCreateGuest(w, r, db, config)
+	})
+	mux.HandleFunc("POST /api/avatar/update", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerUpdateAvatar(w, r, db, config)
+	})
+	mux.HandleFunc("GET /api/avatar", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetAvatar(w, r, db, config)
 	})
 
 	/*

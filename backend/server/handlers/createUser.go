@@ -8,14 +8,12 @@ import (
 
 	"github.com/BetoDev25/doodle-game/backend/internal/auth"
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
-	"github.com/sqlc-dev/pqtype"
 )
 
 func HandlerCreateUser(w http.ResponseWriter, r *http.Request, db *database.Queries) {
 	type params struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
-		//Email    string `json:"email"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -32,20 +30,16 @@ func HandlerCreateUser(w http.ResponseWriter, r *http.Request, db *database.Quer
 		return
 	}
 
-	defaultAvatar := GenerateDefaultAvatar()
-	avatar := pqtype.NullRawMessage{
-		RawMessage: defaultAvatar,
-		Valid:      true,
-	}
-
 	user, err := db.CreateUser(r.Context(), database.CreateUserParams{
 		Username: input.Username,
-		//Email:        input.Email, // To be implented in the future; temporarily "pending@gmail.com"
 		PasswordHash: sql.NullString{
 			String: hashedPassword,
 			Valid:  true,
 		},
-		ProfileStrokes: avatar,
+		AvatarPath: sql.NullString{
+			String: "/avatars/default.png",
+			Valid:  true,
+		},
 	})
 	if err != nil {
 		fmt.Println("CreateUser error:", err)
@@ -53,10 +47,10 @@ func HandlerCreateUser(w http.ResponseWriter, r *http.Request, db *database.Quer
 		return
 	}
 
-	RespondWithJSON(w, http.StatusCreated, database.User{
-		ID:        user.ID,
-		Username:  user.Username,
-		CreatedAt: user.CreatedAt,
-		Email:     user.Email,
+	RespondWithJSON(w, http.StatusCreated, map[string]interface{}{
+		"id":          user.ID,
+		"username":    user.Username,
+		"created_at":  user.CreatedAt,
+		"avatar_path": user.AvatarPath.String,
 	})
 }

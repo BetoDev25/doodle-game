@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/sqlc-dev/pqtype"
 )
 
 type Drawing struct {
@@ -39,16 +38,16 @@ type Session struct {
 }
 
 type User struct {
-	ID             uuid.UUID
-	Username       string
-	Email          string
-	PasswordHash   sql.NullString
-	CreatedAt      sql.NullTime
-	LastActiveAt   sql.NullTime
-	IsGuest        sql.NullBool
-	ExpiresAt      sql.NullTime
-	ProfileStrokes pqtype.NullRawMessage
-	Bio            string
+	ID           uuid.UUID
+	Username     string
+	Email        string
+	PasswordHash sql.NullString
+	CreatedAt    sql.NullTime
+	LastActiveAt sql.NullTime
+	IsGuest      sql.NullBool
+	ExpiresAt    sql.NullTime
+	AvatarPath   sql.NullString
+	Bio          string
 }
 
 type Vote struct {

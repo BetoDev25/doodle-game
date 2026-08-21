@@ -1,4 +1,5 @@
 document.getElementById('modal-close').addEventListener('click', closeModal);
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Wait for user to be loaded
     if (!window.currentUser) {
@@ -16,11 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('profile-username').textContent = user.username;
 
     // Format created_at (if available)
-    console.log("Checking to see if there's a date...");
-    console.log("user.created_at:", user.created_at);
     if (user.created_at) {
         const date = new Date(user.created_at);
-        console.log(`User date: ${date}`);
         document.getElementById('profile-created').textContent = `Joined: ${date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',
@@ -29,17 +27,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Display bio
-    if (user.bio !== undefined) {
-        document.getElementById('profile-bio').textContent = user.bio || '';
-    } else {
-        document.getElementById('profile-bio').textContent = '';
-    }
+    document.getElementById('profile-bio').textContent = user.bio || '';
 
     // Render avatar
     renderAvatar(user);
 
     // Load drawings
     await loadDrawings();
+});
+
+document.getElementById('avatar-edit-btn').addEventListener('click', () => {
+    document.getElementById('avatar-input').click();
+});
+
+document.getElementById('avatar-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    const submitBtn = document.getElementById('avatar-edit-btn');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Uploading...';
+    submitBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/avatar/update', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Upload failed');
+        }
+
+        const data = await response.json();
+
+        const avatarImg = document.getElementById('avatar-img');
+        avatarImg.src = data.path + '?t=' + Date.now();
+
+        alert('Avatar uploaded successfully!');
+
+    } catch (error) {
+        console.error('Upload error:', error);
+        alert('Failed to upload avatar: ' + error.message);
+    } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        e.target.value = ''; // Clear input
+    }
 });
 
 function renderModalDrawings(matchData) {
@@ -132,15 +171,15 @@ function renderStrokesOnCanvas(ctx, strokesData, width, height) {
 }
 
 function renderAvatar(user) {
-    const canvas = document.getElementById('avatarCanvas');
-    const ctx = canvas.getContext('2d');
+    const avatarImg = document.getElementById('avatar-img');
 
-    if (user.profile_strokes && user.profile_strokes.length > 0) {
-        renderStrokes(ctx, user.profile_strokes, canvas.width, canvas.height);
+    if (user.avatar_path) {
+        avatarImg.src = user.avatar_path + '?t=' + Date.now();
+        avatarImg.style.display = 'block';
     } else {
         // Fallback: colored square
-        ctx.fillStyle = '#ccc';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        avatarImg.src = '/avatars/default.png';
+        avatarImg.style.display = 'block';
     }
 }
 
