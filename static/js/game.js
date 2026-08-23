@@ -366,6 +366,12 @@ function showResultScreen(data) {
                     <canvas id="theirDrawingCanvas" width="300" height="200" style="border:2px solid #ddd;"></canvas>
                 </div>
             </div>
+            <div class="favorite-container">
+                <button class="favorite-btn" data-match-id="${data.match_id}" data-is-favorite="false">
+                    <span class="heart-icon">🤍</span>
+                    <span class="favorite-text">Favorite This Match</span>
+                </button>
+            </div>
             <button id="playAgainBtn" style="margin-top:20px; padding:10px 30px;">Play Again</button>
         </div>
     `;
@@ -373,6 +379,58 @@ function showResultScreen(data) {
     // Render both drawings
     renderResultDrawing('yourDrawingCanvas', data.your_drawing);
     renderResultDrawing('theirDrawingCanvas', data.their_drawing);
+
+    const favBtn = document.querySelector('.favorite-btn');
+    if (favBtn) {
+        favBtn.addEventListener('click', async function() {
+            const matchId = this.dataset.matchId;
+            const isFavorite = this.dataset.isFavorite === 'true';
+            const newState = !isFavorite;
+
+            const heartIcon = this.querySelector('.heart-icon');
+            const favText = this.querySelector('.favorite-text');
+
+            if (newState) {
+                heartIcon.textContent = '❤️';
+                favText.textContent = 'Favorited Match';
+                this.dataset.isFavorite = 'true';
+            } else {
+                heartIcon.textContent = '🤍';
+                favText.textContent = 'Favorite This Match';
+                this.dataset.isFavorite = 'false';
+            }
+
+            // API call
+            try {
+                const response = await fetch(`/api/favorites/${newState}/${matchId}`, {
+                    method: 'POST'
+                });
+                if (!response.ok) {
+                    if (newState) {
+                        heartIcon.textContent = '🤍';
+                        favText.textContent = 'Favorite This Match';
+                        this.dataset.isFavorite = 'false';
+                    } else {
+                        heartIcon.textContent = '❤️';
+                        favText.textContent = 'Favorited Match';
+                        this.dataset.isFavorite = 'true';
+                    }
+                    alert('Failed to update favorite');
+                }
+            } catch (error) {
+                if (newState) {
+                    heartIcon.textContent = '🤍';
+                    favText.textContent = 'Favorite This Match';
+                    this.dataset.isFavorite = 'false';
+                } else {
+                    heartIcon.textContent = '❤️';
+                    favText.textContent = 'Favorited Match';
+                    this.dataset.isFavorite = 'true';
+                }
+                alert('Error connecting to server');
+            }
+        });
+    }
     
     document.getElementById('playAgainBtn').addEventListener('click', () => {
         // Reset frontend state

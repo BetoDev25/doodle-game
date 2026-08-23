@@ -99,6 +99,14 @@ function renderTaskbar() {
         ctx.textBaseline = 'middle';
         ctx.fillText(username ? username[0].toUpperCase() : '?', 16, 16);
     }
+
+    document.getElementById('authBtn').addEventListener('click', () => {
+        if (isGuest) {
+            window.location.href = '/login.html';
+        } else {
+            handleLogout();
+        }
+    });
 }
 
 async function handleLogout() {

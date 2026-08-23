@@ -14,7 +14,7 @@ import (
 const createMatch = `-- name: CreateMatch :one
 INSERT INTO matches (id, starter_id, finisher_id, created_at)
 VALUES ($1, $2, $3, NOW())
-RETURNING id, starter_id, finisher_id, created_at, finished_at
+RETURNING id, starter_id, finisher_id, created_at, finished_at, favorites_count
 `
 
 type CreateMatchParams struct {
@@ -32,6 +32,7 @@ func (q *Queries) CreateMatch(ctx context.Context, arg CreateMatchParams) (Match
 		&i.FinisherID,
 		&i.CreatedAt,
 		&i.FinishedAt,
+		&i.FavoritesCount,
 	)
 	return i, err
 }
@@ -43,4 +44,46 @@ DELETE FROM matches WHERE id = $1
 func (q *Queries) DeleteMatchByID(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.ExecContext(ctx, deleteMatchByID, id)
 	return err
+}
+
+const getMostRecentMatches = `-- name: GetMostRecentMatches :many
+SELECT id, starter_id, finisher_id, created_at, finished_at, favorites_count
+FROM matches
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type GetMostRecentMatchesParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) GetMostRecentMatches(ctx context.Context, arg GetMostRecentMatchesParams) ([]Match, error) {
+	rows, err := q.db.QueryContext(ctx, getMostRecentMatches, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Match
+	for rows.Next() {
+		var i Match
+		if err := rows.Scan(
+			&i.ID,
+			&i.StarterID,
+			&i.FinisherID,
+			&i.CreatedAt,
+			&i.FinishedAt,
+			&i.FavoritesCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

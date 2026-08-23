@@ -62,6 +62,9 @@ func main() {
 	mux.HandleFunc("GET /api/avatar", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetAvatar(w, r, db, config)
 	})
+	mux.HandleFunc("POST /api/favorites/", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerUpdateFavorite(w, r, db)
+	})
 
 	/*
 		// TEST - TEMPORARY

@@ -5,3 +5,9 @@ RETURNING *;
 
 -- name: DeleteMatchByID :exec
 DELETE FROM matches WHERE id = $1;
+
+-- name: GetMostRecentMatches :many
+SELECT *
+FROM matches
+ORDER BY created_at DESC
+LIMIT $1 OFFSET $2;

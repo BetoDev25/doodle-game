@@ -18,16 +18,23 @@ type Drawing struct {
 	UserID          uuid.NullUUID
 	DoodleStrokes   json.RawMessage
 	FinishedStrokes json.RawMessage
-	VoteCount       sql.NullInt32
 	CreatedAt       sql.NullTime
 }
 
+type Favorite struct {
+	ID        uuid.UUID
+	UserID    uuid.NullUUID
+	CreatedAt sql.NullTime
+	MatchID   uuid.UUID
+}
+
 type Match struct {
-	ID         uuid.UUID
-	StarterID  uuid.NullUUID
-	FinisherID uuid.NullUUID
-	CreatedAt  sql.NullTime
-	FinishedAt sql.NullTime
+	ID             uuid.UUID
+	StarterID      uuid.NullUUID
+	FinisherID     uuid.NullUUID
+	CreatedAt      sql.NullTime
+	FinishedAt     sql.NullTime
+	FavoritesCount sql.NullInt32
 }
 
 type Session struct {
@@ -48,11 +55,4 @@ type User struct {
 	ExpiresAt    sql.NullTime
 	AvatarPath   sql.NullString
 	Bio          string
-}
-
-type Vote struct {
-	ID        uuid.UUID
-	UserID    uuid.NullUUID
-	DrawingID uuid.UUID
-	CreatedAt sql.NullTime
 }

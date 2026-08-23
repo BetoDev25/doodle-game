@@ -21,16 +21,3 @@ FROM drawings
 WHERE user_id = $1
 ORDER BY created_at DESC
 LIMIT 20 OFFSET $2;
-
--- name: GetMostVotedDrawings :many
-SELECT id, match_id, user_id, doodle_strokes, finished_strokes, vote_count, created_at
-FROM drawings
-WHERE created_at > NOW() - INTERVAL '1 day' * sqlc.arg(timeframe_days)
-ORDER BY vote_count DESC, created_at DESC
-LIMIT $1 OFFSET $2;
-
--- name: GetMostRecentDrawings :many
-SELECT id, match_id, user_id, doodle_strokes, finished_strokes, vote_count, created_at
-FROM drawings
-ORDER BY created_at DESC
-LIMIT $1 OFFSET $2;
