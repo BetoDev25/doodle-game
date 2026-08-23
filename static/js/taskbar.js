@@ -15,7 +15,6 @@ async function getCurrentUser() {
             bio: user.bio,
             avatar_path: user.avatar_path || '/avatars/default.png',
         };
-        console.log('profile strokes:', window.currentUser.profile_strokes);
         renderTaskbar();
         return window.currentUser;
     }
@@ -40,8 +39,9 @@ async function getCurrentUser() {
         console.log('Guest response:', guest);
         window.currentUser = {
             id: guest.ID,
-            username: guest.Username,
+            username: guest.username,
             isGuest: true,
+            avatar_path: guest.avatar_path || '/avatars/default.png',
         };
         renderTaskbar();
         return window.currentUser;

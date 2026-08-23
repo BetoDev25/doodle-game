@@ -3,8 +3,10 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/BetoDev25/doodle-game/backend/config"
@@ -32,16 +34,38 @@ func HandlerCreateGuest(w http.ResponseWriter, r *http.Request, db *database.Que
 		return
 	}
 
-	// Remove profile_strokes - guests get default avatar path
-	guest, err := db.CreateGuest(r.Context(), database.CreateGuestParams{
-		Username: username,
-		AvatarPath: sql.NullString{
-			String: "/avatars/default.png",
-			Valid:  true,
-		},
-	})
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Couldn't create guest", err)
+	// Try to create guest, retry with new username if duplicate
+	var guest database.CreateGuestRow
+	var createErr error
+
+	for attempt := 0; attempt < 3; attempt++ {
+		guest, createErr = db.CreateGuest(r.Context(), database.CreateGuestParams{
+			Username: username,
+			AvatarPath: sql.NullString{
+				String: "/avatars/default.png",
+				Valid:  true,
+			},
+		})
+
+		if createErr == nil {
+			break
+		}
+
+		// Check if it's a duplicate key error
+		if strings.Contains(createErr.Error(), "duplicate key") || strings.Contains(createErr.Error(), "23505") {
+			// Generate a new unique username
+			username = fmt.Sprintf("Guest%d", time.Now().UnixNano()%1000000)
+			log.Printf("Username taken, retrying with: %s", username)
+			continue
+		}
+
+		// Non-duplicate error, break out
+		break
+	}
+
+	if createErr != nil {
+		log.Printf("CreateGuest error after retries: %v", createErr)
+		RespondWithError(w, http.StatusInternalServerError, "Couldn't create guest", createErr)
 		return
 	}
 

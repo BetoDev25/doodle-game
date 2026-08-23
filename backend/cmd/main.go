@@ -65,6 +65,9 @@ func main() {
 	mux.HandleFunc("POST /api/favorites/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerUpdateFavorite(w, r, db)
 	})
+	mux.HandleFunc("GET /api/favorites", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetFavorites(w, r, db)
+	})
 
 	/*
 		// TEST - TEMPORARY

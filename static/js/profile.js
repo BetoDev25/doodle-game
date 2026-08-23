@@ -1,3 +1,13 @@
+let userFavorites = [];
+
+async function loadFavorites() {
+    const response = await fetch('/api/favorites');
+    if (response.ok) {
+        const data = await response.json();
+        userFavorites = data.favorites || []; // Array of match IDs
+    }
+}
+
 document.getElementById('modal-close').addEventListener('click', closeModal);
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -12,6 +22,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '/login.html';
         return;
     }
+    
+    await loadFavorites();
 
     // Display profile info
     document.getElementById('profile-username').textContent = user.username;
@@ -87,10 +99,81 @@ function renderModalDrawings(matchData) {
 
     // Create container for both drawings
     const container = document.createElement('div');
+    container.style.position = 'relative';
     container.style.display = 'flex';
     container.style.gap = '20px';
     container.style.justifyContent = 'center';
     container.style.flexWrap = 'wrap';
+    container.style.paddingTop = '40px';
+
+    // --- Heart Icon (Top Left) ---
+    const heartContainer = document.createElement('div');
+    heartContainer.style.position = 'absolute';
+    heartContainer.style.top = '0';
+    heartContainer.style.left = '0';
+    heartContainer.style.cursor = 'pointer';
+    heartContainer.style.fontSize = '28px';
+    heartContainer.style.display = 'flex';
+    heartContainer.style.alignItems = 'center';
+    heartContainer.style.gap = '8px';
+    heartContainer.title = matchData.is_favorite ? 'Unfavorite this match' : 'Favorite this match';
+
+    const heartIcon = document.createElement('span');
+    heartIcon.id = 'modal-heart-icon';
+    heartIcon.textContent = matchData.is_favorite ? '❤️' : '🤍';
+
+    heartContainer.appendChild(heartIcon);
+    container.appendChild(heartContainer);
+
+    // --- Heart click ---
+    heartContainer.addEventListener('click', async () => {
+        const matchId = matchData.match_id;
+        const isFavorite = matchData.is_favorite || false;
+        const newState = !isFavorite;
+
+        // Optimistic UI update
+        heartIcon.textContent = newState ? '❤️' : '🤍';
+        heartContainer.title = newState ? 'Unfavorite this match' : 'Favorite this match';
+        matchData.is_favorite = newState;
+
+        if (newState) {
+            userFavorites.push(matchId);
+        } else {
+            userFavorites = userFavorites.filter(id => id !== matchId);
+        }
+
+        try {
+            const response = await fetch(`/api/favorites/${newState}/${matchId}`, {
+                method: 'POST'
+            });
+            if (!response.ok) {
+                // Revert on error
+                heartIcon.textContent = isFavorite ? '❤️' : '🤍';
+                heartContainer.title = isFavorite ? 'Unfavorite this match' : 'Favorite this match';
+                matchData.is_favorite = isFavorite;
+
+                if (isFavorite) {
+                    userFavorites.push(matchId);
+                } else {
+                    userFavorites = userFavorites.filter(id => id !== matchId);
+                }
+
+                alert('Failed to update favorite');
+            }
+        } catch (error) {
+            heartIcon.textContent = isFavorite ? '❤️' : '🤍';
+            heartContainer.title = isFavorite ? 'Unfavorite this match' : 'Favorite this match';
+            matchData.is_favorite = isFavorite;
+
+            if (isFavorite) {
+                userFavorites.push(matchId);
+            } else {
+                userFavorites = userFavorites.filter(id => id !== matchId);
+            }
+
+            alert('Error connecting to server');
+        }
+    });
 
     // Player 1 drawing
     if (matchData.drawings && matchData.drawings.length >= 1) {
@@ -255,16 +338,19 @@ async function loadDrawings() {
             label.textContent = dateStr;
 
             card.addEventListener('click', async () => {
-            const matchId = drawing.match_id;
-            const response = await fetch(`/api/view-drawings/${matchId}`);
-            const data = await response.json();
-            renderModalDrawings(data);
-            openModal();
-        });
+                const matchId = drawing.match_id;
+                const response = await fetch(`/api/view-drawings/${matchId}`);
+                const data = await response.json();
 
-            card.appendChild(canvas);
-            card.appendChild(label);
-            grid.appendChild(card);
+                data.is_favorite = userFavorites.includes(matchId);
+
+                renderModalDrawings(data);
+                openModal();
+            });
+
+                card.appendChild(canvas);
+                card.appendChild(label);
+                grid.appendChild(card);
         });
 
     } catch (error) {
