@@ -28,6 +28,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Display profile info
     document.getElementById('profile-username').textContent = user.username;
 
+    // Get URL params
+    const pathParts = window.location.pathname.split('/');
+    const username = pathParts[2] || user.username;
+    const section = pathParts[3] || 'matches';
+    const currentPage = parseInt(pathParts[4]) || 1;
+
+    // Update mini-nav active state
+    document.querySelectorAll('.mini-nav-link').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('data-section') === section) {
+            link.classList.add('active');
+        }
+    });
+
+    // Update mini-nav links
+    const matchesLink = document.querySelector('.mini-nav-link-matches');
+    const favoritesLink = document.querySelector('.mini-nav-link-favorites');
+
+    if (matchesLink) {
+        matchesLink.href = `/profile/${username}/matches/${currentPage}`;
+    }
+    if (favoritesLink) {
+        favoritesLink.href = `/profile/${username}/favorites/${currentPage}`;
+    }
+
     // Format created_at (if available)
     if (user.created_at) {
         const date = new Date(user.created_at);
@@ -44,8 +69,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Render avatar
     renderAvatar(user);
 
-    // Load drawings
-    await loadDrawings();
+    let data = null;
+    let title = '';
+
+    if (section === 'favorites') {
+        data = await getRecentFavorites(username, currentPage);
+        title = 'Favorite Matches';
+        if (data) {
+            renderDrawings(data, title);
+        }
+    } else if (section === 'matches') {
+        data = await getRecentMatches(username, currentPage);
+        title = 'Recent Matches';
+        if (data) {
+            renderDrawings(data, title);
+        }
+    }
+
+    //TO-DO: Implement 404 page
 });
 
 document.getElementById('avatar-edit-btn').addEventListener('click', () => {
@@ -289,73 +330,155 @@ function renderStrokes(ctx, strokesData, width, height) {
     });
 }
 
-async function loadDrawings() {
-    try {
-        const response = await fetch('/api/drawings');
-        if (!response.ok) {
-            console.error('Failed to load drawings');
-            return;
-        }
+function renderDrawings(data, title) {
+    const grid = document.getElementById('drawings-grid');
+    
+    // data is the full API response object
+    const items = data.matches || data.favorites || [];
+    const totalPages = data.total_pages || 0;
+    const currentPage = data.current_page || 1;
+    const username = data.username || '';
 
-        const drawings = await response.json();
-        const grid = document.getElementById('drawings-grid');
+    if (items.length === 0) {
+        grid.innerHTML = `<h2>${title}</h2><p>No drawings yet.</p>`;
+        return;
+    }
 
-        if (drawings.length === 0) {
-            grid.innerHTML = '<p>No drawings yet. Play a match to get started!</p>';
-            return;
-        }
-
-        drawings.forEach(drawing => {
-            const card = document.createElement('div');
-            card.className = 'drawing-card';
-
-            // Thumbnail
-            const canvas = document.createElement('canvas');
-            canvas.width = 200;
-            canvas.height = 150;
-            const ctx = canvas.getContext('2d');
-
-            if (drawing.finished_strokes && drawing.finished_strokes.length > 0) {
-                renderStrokes(ctx, drawing.finished_strokes, 200, 150);
-            } else {
-                ctx.fillStyle = '#eee';
-                ctx.fillRect(0, 0, 200, 150);
-                ctx.fillStyle = '#999';
-                ctx.font = '14px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('No strokes', 100, 75);
-            }
-
-            // Date
-            const date = new Date(drawing.created_at);
-            const dateStr = date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-
-            const label = document.createElement('p');
-            label.textContent = dateStr;
-
-            card.addEventListener('click', async () => {
-                const matchId = drawing.match_id;
-                const response = await fetch(`/api/view-drawings/${matchId}`);
-                const data = await response.json();
-
-                data.is_favorite = userFavorites.includes(matchId);
-
-                renderModalDrawings(data);
-                openModal();
-            });
-
-                card.appendChild(canvas);
-                card.appendChild(label);
-                grid.appendChild(card);
+    let html = `<h2>${title}</h2><div class="drawings-grid-container">`;
+    
+    items.forEach(item => {
+        const date = new Date(item.MatchCreatedAt.Time);
+        const dateStr = date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
         });
 
-    } catch (error) {
-        console.error('Error loading drawings:', error);
+        html += `
+            <div class="drawing-card" data-match-id="${item.MatchID}">
+                <canvas class="drawing-thumbnail" width="200" height="150"></canvas>
+                <p class="drawing-date">${dateStr}</p>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+
+    // Pagination
+    html += `<div class="pagination">`;
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
     }
+    html += `</div>`;
+
+    grid.innerHTML = html;
+
+    // Pagination click listeners
+    document.querySelectorAll('.page-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const page = btn.dataset.page;
+            const section = window.location.pathname.split('/')[3];
+            window.location.href = `/profile/${username}/${section}/${page}`;
+        });
+    });
+
+    // Render thumbnails
+    document.querySelectorAll('.drawing-card').forEach((card, index) => {
+        const canvas = card.querySelector('.drawing-thumbnail');
+        const ctx = canvas.getContext('2d');
+        const item = items[index];
+        
+        let strokes;
+        if (item.Drawing1UserID === username) {
+            strokes = item.Drawing1Finished;
+        } else if (item.Drawing2UserID === username) {
+            strokes = item.Drawing2Finished;
+        } else {
+            strokes = item.Drawing1Finished;
+        }
+        
+        if (strokes && strokes.length > 0) {
+            renderStrokes(ctx, strokes, 200, 150);
+        } else {
+            ctx.fillStyle = '#eee';
+            ctx.fillRect(0, 0, 200, 150);
+            ctx.fillStyle = '#999';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('No strokes', 100, 75);
+        }
+        
+        card.addEventListener('click', () => {
+            const matchData = {
+                match_id: item.MatchID,
+                drawings: [
+                    {
+                        user_id: item.Drawing1UserID,
+                        username: item.Drawing1Username,
+                        doodle_strokes: item.Drawing1Doodle,
+                        finished_strokes: item.Drawing1Finished
+                    },
+                    {
+                        user_id: item.Drawing2UserID,
+                        username: item.Drawing2Username,
+                        doodle_strokes: item.Drawing2Doodle,
+                        finished_strokes: item.Drawing2Finished
+                    }
+                ]
+            };
+            matchData.is_favorite = userFavorites.includes(item.MatchID);
+            renderModalDrawings(matchData);
+            openModal();
+        });
+    });
+}
+
+function renderPagination(currentPage, totalPages) {
+    const grid = document.getElementById('drawings-grid');
+    const paginationDiv = document.createElement('div');
+    paginationDiv.className = 'pagination';
+    
+    for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === currentPage) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+            window.location.href = `/profile/${username}/${section}/${i}`;
+        });
+        paginationDiv.appendChild(btn);
+    }
+    
+    grid.appendChild(paginationDiv);
+}
+
+async function getRecentFavorites(username, page) {
+    const response = await fetch(`/api/profile/${username}/favorites/${page}`);
+    if (!response.ok) {
+        return null;
+    }
+    const data = await response.json();
+
+    if (page > data.total_pages && data.total_pages > 0) {
+        window.location.href = `/profile/${username}/favorites/${data.total_pages}`;
+        return null;
+    }
+
+    return data;
+}
+
+async function getRecentMatches(username, page) {
+    const response = await fetch(`/api/profile/${username}/matches/${page}`);
+    if (!response.ok) {
+        return null;
+    }
+    const data = await response.json();
+
+    if (page > data.total_pages && data.total_pages > 0) {
+        window.location.href = `/profile/${username}/matches/${data.total_pages}`;
+        return null;
+    }
+
+    return data;
 }
 
 function openModal() {

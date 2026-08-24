@@ -30,3 +30,4 @@
 1. Implement Redis
 2. When successfully logging in, redirect to the last page the user was on.
 3. Prevent duplicate guest usernames from being created
+4. 404 page

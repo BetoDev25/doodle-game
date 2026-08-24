@@ -33,6 +33,20 @@ func main() {
 
 	// END OF TEST - TEMPORARY
 
+	// Profile Sections
+	mux.HandleFunc("/profile/{username}/{section}/{page}", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/profile.html")
+	})
+
+	// View Favorites
+	mux.HandleFunc("GET /api/profile/{username}/favorites/{page}", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetRecentFavorites(w, r, db)
+	})
+	// View Matches
+	mux.HandleFunc("GET /api/profile/{username}/matches/{page}", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetRecentMatches(w, r, db)
+	})
+
 	mux.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/profile.html")
 	})

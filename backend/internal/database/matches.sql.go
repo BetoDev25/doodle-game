@@ -7,6 +7,8 @@ package database
 
 import (
 	"context"
+	"database/sql"
+	"encoding/json"
 
 	"github.com/google/uuid"
 )
@@ -47,9 +49,25 @@ func (q *Queries) DeleteMatchByID(ctx context.Context, id uuid.UUID) error {
 }
 
 const getMostRecentMatches = `-- name: GetMostRecentMatches :many
-SELECT id, starter_id, finisher_id, created_at, finished_at, favorites_count
-FROM matches
-ORDER BY created_at DESC
+SELECT DISTINCT ON (m.id)
+    m.id AS match_id,
+    m.created_at AS match_created_at,
+    d1.id AS drawing1_id,
+    d1.user_id AS drawing1_user_id,
+    u1.username AS drawing1_username,
+    d1.doodle_strokes AS drawing1_doodle,
+    d1.finished_strokes AS drawing1_finished,
+    d2.id AS drawing2_id,
+    d2.user_id AS drawing2_user_id,
+    u2.username AS drawing2_username,
+    d2.doodle_strokes AS drawing2_doodle,
+    d2.finished_strokes AS drawing2_finished
+FROM matches m
+JOIN drawings d1 ON d1.match_id = m.id
+JOIN drawings d2 ON d2.match_id = m.id AND d2.user_id != d1.user_id
+JOIN users u1 ON u1.id = d1.user_id
+JOIN users u2 ON u2.id = d2.user_id
+ORDER BY m.id, m.created_at DESC
 LIMIT $1 OFFSET $2
 `
 
@@ -58,22 +76,43 @@ type GetMostRecentMatchesParams struct {
 	Offset int32
 }
 
-func (q *Queries) GetMostRecentMatches(ctx context.Context, arg GetMostRecentMatchesParams) ([]Match, error) {
+type GetMostRecentMatchesRow struct {
+	MatchID          uuid.UUID
+	MatchCreatedAt   sql.NullTime
+	Drawing1ID       uuid.UUID
+	Drawing1UserID   uuid.NullUUID
+	Drawing1Username string
+	Drawing1Doodle   json.RawMessage
+	Drawing1Finished json.RawMessage
+	Drawing2ID       uuid.UUID
+	Drawing2UserID   uuid.NullUUID
+	Drawing2Username string
+	Drawing2Doodle   json.RawMessage
+	Drawing2Finished json.RawMessage
+}
+
+func (q *Queries) GetMostRecentMatches(ctx context.Context, arg GetMostRecentMatchesParams) ([]GetMostRecentMatchesRow, error) {
 	rows, err := q.db.QueryContext(ctx, getMostRecentMatches, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Match
+	var items []GetMostRecentMatchesRow
 	for rows.Next() {
-		var i Match
+		var i GetMostRecentMatchesRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.StarterID,
-			&i.FinisherID,
-			&i.CreatedAt,
-			&i.FinishedAt,
-			&i.FavoritesCount,
+			&i.MatchID,
+			&i.MatchCreatedAt,
+			&i.Drawing1ID,
+			&i.Drawing1UserID,
+			&i.Drawing1Username,
+			&i.Drawing1Doodle,
+			&i.Drawing1Finished,
+			&i.Drawing2ID,
+			&i.Drawing2UserID,
+			&i.Drawing2Username,
+			&i.Drawing2Doodle,
+			&i.Drawing2Finished,
 		); err != nil {
 			return nil, err
 		}
@@ -86,4 +125,34 @@ func (q *Queries) GetMostRecentMatches(ctx context.Context, arg GetMostRecentMat
 		return nil, err
 	}
 	return items, nil
+}
+
+const getTotalMatches = `-- name: GetTotalMatches :one
+SELECT COUNT(DISTINCT m.id)
+FROM matches m
+JOIN drawings d1 ON d1.match_id = m.id
+JOIN drawings d2 ON d2.match_id = m.id AND d2.user_id != d1.user_id
+`
+
+func (q *Queries) GetTotalMatches(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTotalMatches)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getTotalMatchesByUsername = `-- name: GetTotalMatchesByUsername :one
+SELECT COUNT(DISTINCT m.id)
+FROM matches m
+JOIN drawings d1 ON d1.match_id = m.id
+JOIN drawings d2 ON d2.match_id = m.id AND d2.user_id != d1.user_id
+JOIN users u ON u.id = m.starter_id OR u.id = m.finisher_id
+WHERE u.username = $1
+`
+
+func (q *Queries) GetTotalMatchesByUsername(ctx context.Context, username string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTotalMatchesByUsername, username)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }

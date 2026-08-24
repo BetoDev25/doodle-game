@@ -72,7 +72,7 @@ function renderTaskbar() {
                     <img id="taskbar-avatar-img" width="32" height="32" alt="Avatar" style="object-fit:cover;">
                 </div>
                 <!-- Username link -->
-                <a href="/profile" id="taskbarUsername" style="color:white; text-decoration:none; font-size:14px;">
+                <a href="/profile/${window.currentUser.username}/matches/1" id="taskbarUsername" style="color:white; text-decoration:none; font-size:14px;">
                     ${username ? `${username}` : ''}
                 </a>
                 <button id="authBtn" class="taskbar-btn">

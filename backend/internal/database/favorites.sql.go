@@ -8,6 +8,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 
 	"github.com/google/uuid"
 )
@@ -25,6 +26,108 @@ type AddFavoriteParams struct {
 func (q *Queries) AddFavorite(ctx context.Context, arg AddFavoriteParams) error {
 	_, err := q.db.ExecContext(ctx, addFavorite, arg.UserID, arg.MatchID)
 	return err
+}
+
+const getMostRecentFavoritesByUsername = `-- name: GetMostRecentFavoritesByUsername :many
+SELECT 
+    m.id AS match_id,
+    m.created_at AS match_created_at,
+    f.created_at AS favorited_at,
+    d1.id AS drawing1_id,
+    d1.user_id AS drawing1_user_id,
+    u1.username AS drawing1_username,
+    d1.doodle_strokes AS drawing1_doodle,
+    d1.finished_strokes AS drawing1_finished,
+    d2.id AS drawing2_id,
+    d2.user_id AS drawing2_user_id,
+    u2.username AS drawing2_username,
+    d2.doodle_strokes AS drawing2_doodle,
+    d2.finished_strokes AS drawing2_finished
+FROM favorites f
+JOIN matches m ON m.id = f.match_id
+JOIN drawings d1 ON d1.match_id = m.id
+JOIN drawings d2 ON d2.match_id = m.id AND d2.user_id > d1.user_id
+JOIN users u1 ON u1.id = d1.user_id
+JOIN users u2 ON u2.id = d2.user_id
+WHERE f.user_id = (SELECT id FROM users WHERE users.username = $1)
+ORDER BY f.created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetMostRecentFavoritesByUsernameParams struct {
+	Username string
+	Limit    int32
+	Offset   int32
+}
+
+type GetMostRecentFavoritesByUsernameRow struct {
+	MatchID          uuid.UUID
+	MatchCreatedAt   sql.NullTime
+	FavoritedAt      sql.NullTime
+	Drawing1ID       uuid.UUID
+	Drawing1UserID   uuid.NullUUID
+	Drawing1Username string
+	Drawing1Doodle   json.RawMessage
+	Drawing1Finished json.RawMessage
+	Drawing2ID       uuid.UUID
+	Drawing2UserID   uuid.NullUUID
+	Drawing2Username string
+	Drawing2Doodle   json.RawMessage
+	Drawing2Finished json.RawMessage
+}
+
+func (q *Queries) GetMostRecentFavoritesByUsername(ctx context.Context, arg GetMostRecentFavoritesByUsernameParams) ([]GetMostRecentFavoritesByUsernameRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMostRecentFavoritesByUsername, arg.Username, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMostRecentFavoritesByUsernameRow
+	for rows.Next() {
+		var i GetMostRecentFavoritesByUsernameRow
+		if err := rows.Scan(
+			&i.MatchID,
+			&i.MatchCreatedAt,
+			&i.FavoritedAt,
+			&i.Drawing1ID,
+			&i.Drawing1UserID,
+			&i.Drawing1Username,
+			&i.Drawing1Doodle,
+			&i.Drawing1Finished,
+			&i.Drawing2ID,
+			&i.Drawing2UserID,
+			&i.Drawing2Username,
+			&i.Drawing2Doodle,
+			&i.Drawing2Finished,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTotalFavoritesByUsername = `-- name: GetTotalFavoritesByUsername :one
+SELECT COUNT(DISTINCT f.match_id)
+FROM favorites f
+JOIN matches m ON m.id = f.match_id
+JOIN drawings d1 ON d1.match_id = m.id
+JOIN drawings d2 ON d2.match_id = m.id AND d2.user_id != d1.user_id
+JOIN users u ON u.id = f.user_id
+WHERE u.username = $1
+`
+
+func (q *Queries) GetTotalFavoritesByUsername(ctx context.Context, username string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTotalFavoritesByUsername, username)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
 const getUserFavoritesMatchIDs = `-- name: GetUserFavoritesMatchIDs :many
