@@ -1,0 +1,17 @@
+{
+  "window": "60s",
+  "endpoints": {
+    "/api/login": 5,
+    "/api/users": 3,
+    "/api/guests": 10,
+    "/api/avatar/update": 10,
+    "/api/favorites/": 100,
+    "/api/favorites": 60,
+    "/api/drawings": 30,
+    "/api/me": 60,
+    "/api/avatar": 60,
+    "/api/profile/*/matches/*": 20,
+    "/api/profile/*/favorites/*": 20,
+    "/api/logout": 10
+  }
+}

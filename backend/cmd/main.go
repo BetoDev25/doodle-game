@@ -16,7 +16,7 @@ func main() {
 	flag.Parse()
 	apiCfg := handlers.SetupAPIConfig(*env)
 	mux, server := config.SetupServer(*env)
-	config := config.SetupConfig(*env)
+	cfg := config.SetupConfig(*env)
 	db := apiCfg.DB
 	hub := handlers.SetupWebSocket(db)
 
@@ -39,49 +39,49 @@ func main() {
 	})
 
 	// View Favorites
-	mux.HandleFunc("GET /api/profile/{username}/favorites/{page}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /api/profile/{username}/favorites/{page}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetRecentFavorites(w, r, db)
-	})
+	}))
 	// View Matches
-	mux.HandleFunc("GET /api/profile/{username}/matches/{page}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /api/profile/{username}/matches/{page}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetRecentMatches(w, r, db)
-	})
+	}))
 
-	mux.HandleFunc("/profile", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/profile", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/profile.html")
-	})
+	}))
 
 	// Websocket
 	mux.HandleFunc("/ws", handlers.ServeWebSocket(hub, db))
 
 	// API routes
-	mux.HandleFunc("POST /api/users", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /api/users", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerCreateUser(w, r, db)
-	})
-	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerLoginUser(w, r, db, config)
-	})
-	mux.HandleFunc("GET /api/me", func(w http.ResponseWriter, r *http.Request) {
+	}))
+	mux.HandleFunc("POST /api/login", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerLoginUser(w, r, db, cfg)
+	}))
+	mux.HandleFunc("GET /api/me", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerMe(w, r, db)
-	})
-	mux.HandleFunc("GET /api/drawings", func(w http.ResponseWriter, r *http.Request) {
+	}))
+	mux.HandleFunc("GET /api/drawings", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetDrawings(w, r, db)
-	})
-	mux.HandleFunc("POST /api/guests", func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerCreateGuest(w, r, db, config)
-	})
-	mux.HandleFunc("POST /api/avatar/update", func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerUpdateAvatar(w, r, db, config)
-	})
-	mux.HandleFunc("GET /api/avatar", func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerGetAvatar(w, r, db, config)
-	})
-	mux.HandleFunc("POST /api/favorites/", func(w http.ResponseWriter, r *http.Request) {
+	}))
+	mux.HandleFunc("POST /api/guests", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerCreateGuest(w, r, db, cfg)
+	}))
+	mux.HandleFunc("POST /api/avatar/update", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerUpdateAvatar(w, r, db, cfg)
+	}))
+	mux.HandleFunc("GET /api/avatar", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetAvatar(w, r, db, cfg)
+	}))
+	mux.HandleFunc("POST /api/favorites/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerUpdateFavorite(w, r, db)
-	})
-	mux.HandleFunc("GET /api/favorites", func(w http.ResponseWriter, r *http.Request) {
+	}))
+	mux.HandleFunc("GET /api/favorites", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetFavorites(w, r, db)
-	})
+	}))
 
 	/*
 		// TEST - TEMPORARY
@@ -96,12 +96,12 @@ func main() {
 
 	// End of Tesst
 
-	mux.HandleFunc("POST /api/logout", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /api/logout", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerLogoutUser(w, r, db)
-	})
+	}))
 
 	// Root route - index.html
-	mux.HandleFunc("/", handlers.Middleware(db, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		http.FileServer(http.Dir("./static")).ServeHTTP(w, r)
 	}))
 

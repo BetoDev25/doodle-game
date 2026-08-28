@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"strings"
 
 	"github.com/google/uuid"
 
+	"github.com/BetoDev25/doodle-game/backend/internal/cookies"
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
 	"github.com/BetoDev25/doodle-game/backend/internal/websocket"
 )
@@ -89,4 +91,30 @@ func GenerateAvatarPath() string {
 	}
 
 	return fmt.Sprintf("%s-%s", string(firstPart), string(secondPart))
+}
+
+func GetIdentifier(r *http.Request) string {
+	// Try to get authenticated user first
+	sessionToken, err := cookies.Read(r, "session_token")
+	if err == nil && sessionToken != "" {
+		return sessionToken
+	}
+
+	return GetClientIP(r)
+}
+
+func GetClientIP(r *http.Request) string {
+	forwarded := r.Header.Get("X-Forwarded-For")
+	if forwarded != "" {
+		ips := strings.Split(forwarded, ",")
+		return strings.TrimSpace(ips[0])
+	}
+
+	realIP := r.Header.Get("X-Real-IP")
+	if realIP != "" {
+		return realIP
+	}
+
+	ip := strings.Split(r.RemoteAddr, ":")[0]
+	return ip
 }

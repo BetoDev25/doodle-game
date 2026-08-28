@@ -5,13 +5,19 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/BetoDev25/doodle-game/backend/config"
 	"github.com/BetoDev25/doodle-game/backend/internal/cookies"
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
 )
 
-func Middleware(db *database.Queries, next http.HandlerFunc) http.HandlerFunc {
+func Middleware(cfg config.Config, db *database.Queries, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//check if the user currently has a session_token (is logged in)
+		sessionToken, _ := cookies.Read(r, "session_token")
+
+		if !cfg.RateLimiter.Allow(sessionToken, r.URL.Path) {
+			http.Error(w, "Too many requests. Please slow down.", http.StatusTooManyRequests)
+			return
+		}
 
 		//paths that don't require authentification
 		publicPaths := []string{
@@ -31,7 +37,6 @@ func Middleware(db *database.Queries, next http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 
-		sessionToken, err := cookies.Read(r, "session_token")
 		/*
 			if err != nil || sessionToken == "" {
 				http.Redirect(w, r, "/login.html", http.StatusSeeOther)
