@@ -134,6 +134,42 @@ document.getElementById('avatar-input').addEventListener('change', async (e) => 
     }
 });
 
+function parseStrokes(strokesData) {
+    if (!strokesData) {
+        return [];
+    }
+    
+    // Handle the RawMessage structure from sqlc
+    if (strokesData.RawMessage !== undefined) {
+        if (Array.isArray(strokesData.RawMessage)) {
+            return strokesData.RawMessage;
+        }
+        // If RawMessage is a string, parse it
+        if (typeof strokesData.RawMessage === 'string') {
+            try {
+                return JSON.parse(strokesData.RawMessage);
+            } catch (e) {
+                return [];
+            }
+        }
+    }
+    
+    if (typeof strokesData === 'string') {
+        try {
+            const parsed = JSON.parse(strokesData);
+            return parsed;
+        } catch (e) {
+            return [];
+        }
+    }
+    
+    if (Array.isArray(strokesData)) {
+        return strokesData;
+    }
+    
+    return [];
+}
+
 function renderModalDrawings(matchData) {
     const modalBody = document.getElementById('modal-body');
     modalBody.innerHTML = '';
@@ -217,48 +253,44 @@ function renderModalDrawings(matchData) {
     });
 
     // Player 1 drawing
-    if (matchData.drawings && matchData.drawings.length >= 1) {
-        const p1Container = document.createElement('div');
-        p1Container.style.textAlign = 'center';
+    const p1Container = document.createElement('div');
+    p1Container.style.textAlign = 'center';
 
-        const canvas1 = document.createElement('canvas');
-        canvas1.width = 300;
-        canvas1.height = 200;
-        const ctx1 = canvas1.getContext('2d');
+    const canvas1 = document.createElement('canvas');
+    canvas1.width = 300;
+    canvas1.height = 200;
+    const ctx1 = canvas1.getContext('2d');
 
-        const strokes1 = matchData.drawings[0].finished_strokes || matchData.drawings[0].doodle_strokes;
-        renderStrokesOnCanvas(ctx1, strokes1, 300, 200);
+    const strokes1 = parseStrokes(matchData.drawing1_finished || matchData.drawing1_doodle);
+    renderStrokesOnCanvas(ctx1, strokes1, 300, 200);
 
-        const label1 = document.createElement('p');
-        label1.textContent = matchData.drawings[0].username || 'Deleted User';
-        label1.style.margin = '8px 0 0 0';
+    const label1 = document.createElement('p');
+    label1.textContent = matchData.drawing1_username || 'Deleted User';
+    label1.style.margin = '8px 0 0 0';
 
-        p1Container.appendChild(canvas1);
-        p1Container.appendChild(label1);
-        container.appendChild(p1Container);
-    }
+    p1Container.appendChild(canvas1);
+    p1Container.appendChild(label1);
+    container.appendChild(p1Container);
 
     // Player 2 drawing
-    if (matchData.drawings && matchData.drawings.length >= 2) {
-        const p2Container = document.createElement('div');
-        p2Container.style.textAlign = 'center';
+    const p2Container = document.createElement('div');
+    p2Container.style.textAlign = 'center';
 
-        const canvas2 = document.createElement('canvas');
-        canvas2.width = 300;
-        canvas2.height = 200;
-        const ctx2 = canvas2.getContext('2d');
+    const canvas2 = document.createElement('canvas');
+    canvas2.width = 300;
+    canvas2.height = 200;
+    const ctx2 = canvas2.getContext('2d');
 
-        const strokes2 = matchData.drawings[1].finished_strokes || matchData.drawings[1].doodle_strokes;
-        renderStrokesOnCanvas(ctx2, strokes2, 300, 200);
+    const strokes2 = parseStrokes(matchData.drawing2_finished || matchData.drawing2_doodle);
+    renderStrokesOnCanvas(ctx2, strokes2, 300, 200);
 
-        const label2 = document.createElement('p');
-        label2.textContent = matchData.drawings[1].username || 'Deleted User';
-        label2.style.margin = '8px 0 0 0';
+    const label2 = document.createElement('p');
+    label2.textContent = matchData.drawing2_username || 'Deleted User';
+    label2.style.margin = '8px 0 0 0';
 
-        p2Container.appendChild(canvas2);
-        p2Container.appendChild(label2);
-        container.appendChild(p2Container);
-    }
+    p2Container.appendChild(canvas2);
+    p2Container.appendChild(label2);
+    container.appendChild(p2Container);
 
     modalBody.appendChild(container);
 }
@@ -311,7 +343,17 @@ function renderStrokes(ctx, strokesData, width, height) {
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, width, height);
 
-    strokesData.forEach(stroke => {
+    const parsedData = parseStrokes(strokesData);
+
+    if (!parsedData || parsedData.length === 0) {
+        ctx.fillStyle = '#999';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('No strokes', width/2, height/2);
+        return;
+    }
+
+    parsedData.forEach(stroke => {
         ctx.strokeStyle = stroke.color || '#000000';
         ctx.lineWidth = stroke.size || 3;
         ctx.lineCap = 'round';
@@ -347,12 +389,21 @@ function renderDrawings(data, title) {
     let html = `<h2>${title}</h2><div class="drawings-grid-container">`;
     
     items.forEach(item => {
-        const date = new Date(item.MatchCreatedAt.Time);
-        const dateStr = date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
+        let dateStr = 'Unknown date';
+        if (item.MatchCreatedAt && item.MatchCreatedAt.Valid) {
+            try {
+                const date = new Date(item.MatchCreatedAt.Time);
+                if (!isNaN(date.getTime())) {
+                    dateStr = date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                }
+            } catch (e) {
+                console.error('Invalid date:', item.MatchCreatedAt);
+            }
+        }
 
         html += `
             <div class="drawing-card" data-match-id="${item.MatchID}">
@@ -388,44 +439,50 @@ function renderDrawings(data, title) {
         const ctx = canvas.getContext('2d');
         const item = items[index];
         
+        // Use camelCase field names from backend
         let strokes;
         if (item.Drawing1UserID === username) {
-            strokes = item.Drawing1Finished;
+            strokes = item.Drawing1Finished || item.Drawing1Doodle;
         } else if (item.Drawing2UserID === username) {
-            strokes = item.Drawing2Finished;
+            strokes = item.Drawing2Finished || item.Drawing2Doodle;
         } else {
-            strokes = item.Drawing1Finished;
+            strokes = item.Drawing1Finished || item.Drawing1Doodle;
+        }
+
+        console.log('=== Thumbnail Debug ===');
+        console.log('Match ID:', item.MatchID);
+        console.log('Current username:', username);
+        console.log('Drawing1UserID:', item.Drawing1UserID);
+        console.log('Drawing2UserID:', item.Drawing2UserID);
+        console.log('Selected strokes:', strokes);
+        console.log('Drawing1Finished:', item.Drawing1Finished);
+        console.log('Drawing1Doodle:', item.Drawing1Doodle);
+        console.log('Drawing2Finished:', item.Drawing2Finished);
+        console.log('Drawing2Doodle:', item.Drawing2Doodle);
+        console.log('Strokes type:', typeof strokes);
+        if (strokes) {
+            console.log('Strokes keys:', Object.keys(strokes));
+            console.log('Strokes.RawMessage:', strokes.RawMessage);
         }
         
-        if (strokes && strokes.length > 0) {
-            renderStrokes(ctx, strokes, 200, 150);
-        } else {
-            ctx.fillStyle = '#eee';
-            ctx.fillRect(0, 0, 200, 150);
-            ctx.fillStyle = '#999';
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('No strokes', 100, 75);
-        }
+        renderStrokes(ctx, strokes, 200, 150);
         
         card.addEventListener('click', () => {
             const matchData = {
-                match_id: item.MatchID,
-                drawings: [
-                    {
-                        user_id: item.Drawing1UserID,
-                        username: item.Drawing1Username,
-                        doodle_strokes: item.Drawing1Doodle,
-                        finished_strokes: item.Drawing1Finished
-                    },
-                    {
-                        user_id: item.Drawing2UserID,
-                        username: item.Drawing2Username,
-                        doodle_strokes: item.Drawing2Doodle,
-                        finished_strokes: item.Drawing2Finished
-                    }
-                ]
-            };
+            match_id: item.MatchID,
+            drawing1_user_id: item.Drawing1UserID,
+            drawing1_username: (item.Player1Username && typeof item.Player1Username === 'object') 
+                ? (item.Player1Username.String || 'Deleted User') 
+                : (item.Player1Username || 'Deleted User'),
+            drawing1_doodle: item.Drawing1Doodle,
+            drawing1_finished: item.Drawing1Finished,
+            drawing2_user_id: item.Drawing2UserID,
+            drawing2_username: (item.Player2Username && typeof item.Player2Username === 'object') 
+                ? (item.Player2Username.String || 'Deleted User') 
+                : (item.Player2Username || 'Deleted User'),
+            drawing2_doodle: item.Drawing2Doodle,
+            drawing2_finished: item.Drawing2Finished
+        };
             matchData.is_favorite = userFavorites.includes(item.MatchID);
             renderModalDrawings(matchData);
             openModal();

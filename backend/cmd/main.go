@@ -44,7 +44,7 @@ func main() {
 	}))
 	// View Matches
 	mux.HandleFunc("GET /api/profile/{username}/matches/{page}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerGetRecentMatches(w, r, db)
+		handlers.HandlerGetRecentMatchesByUsername(w, r, db)
 	}))
 
 	mux.HandleFunc("/profile", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {

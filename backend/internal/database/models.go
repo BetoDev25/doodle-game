@@ -30,11 +30,13 @@ type Favorite struct {
 
 type Match struct {
 	ID             uuid.UUID
-	StarterID      uuid.NullUUID
-	FinisherID     uuid.NullUUID
+	Player1ID      uuid.NullUUID
+	Player2ID      uuid.NullUUID
 	CreatedAt      sql.NullTime
 	FinishedAt     sql.NullTime
 	FavoritesCount sql.NullInt32
+	Drawing1ID     uuid.NullUUID
+	Drawing2ID     uuid.NullUUID
 }
 
 type Session struct {

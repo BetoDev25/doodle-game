@@ -27,7 +27,7 @@
 5. Edit page that allows you to change bio, display name, email, etc.
 
 ## Misc.
-1. Implement Redis
+~~1. Implement rate-limiting~~
 2. When successfully logging in, redirect to the last page the user was on.
-3. Prevent duplicate guest usernames from being created
+~~3. Prevent duplicate guest usernames from being created~~
 4. 404 page

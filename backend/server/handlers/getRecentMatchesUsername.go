@@ -7,9 +7,10 @@ import (
 	"strings"
 
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
+	"github.com/google/uuid"
 )
 
-func HandlerGetRecentMatches(w http.ResponseWriter, r *http.Request, db *database.Queries) {
+func HandlerGetRecentMatchesByUsername(w http.ResponseWriter, r *http.Request, db *database.Queries) {
 	pathParts := strings.Split(r.URL.Path, "/")
 	if len(pathParts) < 6 {
 		RespondWithError(w, http.StatusBadRequest, "Invalid URL", nil)
@@ -26,8 +27,20 @@ func HandlerGetRecentMatches(w http.ResponseWriter, r *http.Request, db *databas
 
 	const pageSize = 20
 
-	// Get total count
-	totalMatches, err := db.GetTotalMatches(r.Context())
+	// Get the user ID from the username
+	user, err := db.GetUserByUsername(r.Context(), username)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Could not get user", err)
+		return
+	}
+
+	userID := uuid.NullUUID{
+		UUID:  user.ID,
+		Valid: true,
+	}
+
+	// Get total count for this user
+	totalMatches, err := db.GetTotalMatchesByUsername(r.Context(), userID)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Could not get count", err)
 		return
@@ -44,11 +57,12 @@ func HandlerGetRecentMatches(w http.ResponseWriter, r *http.Request, db *databas
 
 	offset := (page - 1) * pageSize
 
-	log.Printf("Page: %d, Offset: %d", page, offset) // DEBUG
+	log.Printf("Page: %d, Offset: %d", page, offset)
 
-	matches, err := db.GetMostRecentMatches(r.Context(), database.GetMostRecentMatchesParams{
-		Limit:  int32(pageSize),
-		Offset: int32(offset),
+	matches, err := db.GetMostRecentMatchesByUsername(r.Context(), database.GetMostRecentMatchesByUsernameParams{
+		Player1ID: userID,
+		Limit:     int32(pageSize),
+		Offset:    int32(offset),
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Could not get matches", err)

@@ -8,33 +8,35 @@ package database
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/sqlc-dev/pqtype"
 )
 
 const createMatch = `-- name: CreateMatch :one
-INSERT INTO matches (id, starter_id, finisher_id, created_at)
+INSERT INTO matches (id, player1_id, player2_id, created_at)
 VALUES ($1, $2, $3, NOW())
-RETURNING id, starter_id, finisher_id, created_at, finished_at, favorites_count
+RETURNING id, player1_id, player2_id, created_at, finished_at, favorites_count, drawing1_id, drawing2_id
 `
 
 type CreateMatchParams struct {
-	ID         uuid.UUID
-	StarterID  uuid.NullUUID
-	FinisherID uuid.NullUUID
+	ID        uuid.UUID
+	Player1ID uuid.NullUUID
+	Player2ID uuid.NullUUID
 }
 
 func (q *Queries) CreateMatch(ctx context.Context, arg CreateMatchParams) (Match, error) {
-	row := q.db.QueryRowContext(ctx, createMatch, arg.ID, arg.StarterID, arg.FinisherID)
+	row := q.db.QueryRowContext(ctx, createMatch, arg.ID, arg.Player1ID, arg.Player2ID)
 	var i Match
 	err := row.Scan(
 		&i.ID,
-		&i.StarterID,
-		&i.FinisherID,
+		&i.Player1ID,
+		&i.Player2ID,
 		&i.CreatedAt,
 		&i.FinishedAt,
 		&i.FavoritesCount,
+		&i.Drawing1ID,
+		&i.Drawing2ID,
 	)
 	return i, err
 }
@@ -49,25 +51,31 @@ func (q *Queries) DeleteMatchByID(ctx context.Context, id uuid.UUID) error {
 }
 
 const getMostRecentMatches = `-- name: GetMostRecentMatches :many
-SELECT DISTINCT ON (m.id)
+SELECT 
     m.id AS match_id,
     m.created_at AS match_created_at,
+    m.finished_at,
+    m.favorites_count,
+    m.player1_id,
+    m.player2_id,
     d1.id AS drawing1_id,
     d1.user_id AS drawing1_user_id,
-    u1.username AS drawing1_username,
     d1.doodle_strokes AS drawing1_doodle,
     d1.finished_strokes AS drawing1_finished,
     d2.id AS drawing2_id,
     d2.user_id AS drawing2_user_id,
-    u2.username AS drawing2_username,
     d2.doodle_strokes AS drawing2_doodle,
-    d2.finished_strokes AS drawing2_finished
+    d2.finished_strokes AS drawing2_finished,
+    COALESCE(u1.username, 'Deleted User') AS player1_username,
+    COALESCE(u2.username, 'Deleted User') AS player2_username
 FROM matches m
-JOIN drawings d1 ON d1.match_id = m.id
-JOIN drawings d2 ON d2.match_id = m.id AND d2.user_id != d1.user_id
-JOIN users u1 ON u1.id = d1.user_id
-JOIN users u2 ON u2.id = d2.user_id
-ORDER BY m.id, m.created_at DESC
+LEFT JOIN drawings d1 ON d1.match_id = m.id
+LEFT JOIN drawings d2 ON d2.match_id = m.id AND d2.id != d1.id
+LEFT JOIN users u1 ON u1.id = m.player1_id
+LEFT JOIN users u2 ON u2.id = m.player2_id
+WHERE d1.id IS NOT NULL AND d2.id IS NOT NULL
+  AND COALESCE(d1.user_id, '00000000-0000-0000-0000-000000000000') < COALESCE(d2.user_id, '00000000-0000-0000-0000-000000000000')
+ORDER BY m.created_at DESC
 LIMIT $1 OFFSET $2
 `
 
@@ -79,16 +87,20 @@ type GetMostRecentMatchesParams struct {
 type GetMostRecentMatchesRow struct {
 	MatchID          uuid.UUID
 	MatchCreatedAt   sql.NullTime
-	Drawing1ID       uuid.UUID
+	FinishedAt       sql.NullTime
+	FavoritesCount   sql.NullInt32
+	Player1ID        uuid.NullUUID
+	Player2ID        uuid.NullUUID
+	Drawing1ID       uuid.NullUUID
 	Drawing1UserID   uuid.NullUUID
-	Drawing1Username string
-	Drawing1Doodle   json.RawMessage
-	Drawing1Finished json.RawMessage
-	Drawing2ID       uuid.UUID
+	Drawing1Doodle   pqtype.NullRawMessage
+	Drawing1Finished pqtype.NullRawMessage
+	Drawing2ID       uuid.NullUUID
 	Drawing2UserID   uuid.NullUUID
-	Drawing2Username string
-	Drawing2Doodle   json.RawMessage
-	Drawing2Finished json.RawMessage
+	Drawing2Doodle   pqtype.NullRawMessage
+	Drawing2Finished pqtype.NullRawMessage
+	Player1Username  string
+	Player2Username  string
 }
 
 func (q *Queries) GetMostRecentMatches(ctx context.Context, arg GetMostRecentMatchesParams) ([]GetMostRecentMatchesRow, error) {
@@ -103,16 +115,115 @@ func (q *Queries) GetMostRecentMatches(ctx context.Context, arg GetMostRecentMat
 		if err := rows.Scan(
 			&i.MatchID,
 			&i.MatchCreatedAt,
+			&i.FinishedAt,
+			&i.FavoritesCount,
+			&i.Player1ID,
+			&i.Player2ID,
 			&i.Drawing1ID,
 			&i.Drawing1UserID,
-			&i.Drawing1Username,
 			&i.Drawing1Doodle,
 			&i.Drawing1Finished,
 			&i.Drawing2ID,
 			&i.Drawing2UserID,
-			&i.Drawing2Username,
 			&i.Drawing2Doodle,
 			&i.Drawing2Finished,
+			&i.Player1Username,
+			&i.Player2Username,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMostRecentMatchesByUsername = `-- name: GetMostRecentMatchesByUsername :many
+SELECT 
+    m.id AS match_id,
+    m.created_at AS match_created_at,
+    m.finished_at,
+    m.favorites_count,
+    m.player1_id,
+    m.player2_id,
+    d1.id AS drawing1_id,
+    d1.user_id AS drawing1_user_id,
+    d1.doodle_strokes AS drawing1_doodle,
+    d1.finished_strokes AS drawing1_finished,
+    d2.id AS drawing2_id,
+    d2.user_id AS drawing2_user_id,
+    d2.doodle_strokes AS drawing2_doodle,
+    d2.finished_strokes AS drawing2_finished,
+    COALESCE(u1.username, 'Deleted User') AS player1_username,
+    COALESCE(u2.username, 'Deleted User') AS player2_username
+FROM matches m
+LEFT JOIN drawings d1 ON d1.match_id = m.id
+LEFT JOIN drawings d2 ON d2.match_id = m.id AND d2.id != d1.id
+LEFT JOIN users u1 ON u1.id = m.player1_id
+LEFT JOIN users u2 ON u2.id = m.player2_id
+WHERE d1.id IS NOT NULL AND d2.id IS NOT NULL
+  AND COALESCE(d1.user_id, '00000000-0000-0000-0000-000000000000') < COALESCE(d2.user_id, '00000000-0000-0000-0000-000000000000')
+  AND (m.player1_id = $1 OR m.player2_id = $1)
+ORDER BY m.created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetMostRecentMatchesByUsernameParams struct {
+	Player1ID uuid.NullUUID
+	Limit     int32
+	Offset    int32
+}
+
+type GetMostRecentMatchesByUsernameRow struct {
+	MatchID          uuid.UUID
+	MatchCreatedAt   sql.NullTime
+	FinishedAt       sql.NullTime
+	FavoritesCount   sql.NullInt32
+	Player1ID        uuid.NullUUID
+	Player2ID        uuid.NullUUID
+	Drawing1ID       uuid.NullUUID
+	Drawing1UserID   uuid.NullUUID
+	Drawing1Doodle   pqtype.NullRawMessage
+	Drawing1Finished pqtype.NullRawMessage
+	Drawing2ID       uuid.NullUUID
+	Drawing2UserID   uuid.NullUUID
+	Drawing2Doodle   pqtype.NullRawMessage
+	Drawing2Finished pqtype.NullRawMessage
+	Player1Username  string
+	Player2Username  string
+}
+
+func (q *Queries) GetMostRecentMatchesByUsername(ctx context.Context, arg GetMostRecentMatchesByUsernameParams) ([]GetMostRecentMatchesByUsernameRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMostRecentMatchesByUsername, arg.Player1ID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMostRecentMatchesByUsernameRow
+	for rows.Next() {
+		var i GetMostRecentMatchesByUsernameRow
+		if err := rows.Scan(
+			&i.MatchID,
+			&i.MatchCreatedAt,
+			&i.FinishedAt,
+			&i.FavoritesCount,
+			&i.Player1ID,
+			&i.Player2ID,
+			&i.Drawing1ID,
+			&i.Drawing1UserID,
+			&i.Drawing1Doodle,
+			&i.Drawing1Finished,
+			&i.Drawing2ID,
+			&i.Drawing2UserID,
+			&i.Drawing2Doodle,
+			&i.Drawing2Finished,
+			&i.Player1Username,
+			&i.Player2Username,
 		); err != nil {
 			return nil, err
 		}
@@ -130,8 +241,10 @@ func (q *Queries) GetMostRecentMatches(ctx context.Context, arg GetMostRecentMat
 const getTotalMatches = `-- name: GetTotalMatches :one
 SELECT COUNT(DISTINCT m.id)
 FROM matches m
-JOIN drawings d1 ON d1.match_id = m.id
-JOIN drawings d2 ON d2.match_id = m.id AND d2.user_id != d1.user_id
+LEFT JOIN drawings d1 ON d1.match_id = m.id
+LEFT JOIN drawings d2 ON d2.match_id = m.id AND d2.id != d1.id
+WHERE d1.id IS NOT NULL AND d2.id IS NOT NULL
+  AND COALESCE(d1.user_id, '00000000-0000-0000-0000-000000000000') < COALESCE(d2.user_id, '00000000-0000-0000-0000-000000000000')
 `
 
 func (q *Queries) GetTotalMatches(ctx context.Context) (int64, error) {
@@ -144,15 +257,35 @@ func (q *Queries) GetTotalMatches(ctx context.Context) (int64, error) {
 const getTotalMatchesByUsername = `-- name: GetTotalMatchesByUsername :one
 SELECT COUNT(DISTINCT m.id)
 FROM matches m
-JOIN drawings d1 ON d1.match_id = m.id
-JOIN drawings d2 ON d2.match_id = m.id AND d2.user_id != d1.user_id
-JOIN users u ON u.id = m.starter_id OR u.id = m.finisher_id
-WHERE u.username = $1
+LEFT JOIN drawings d1 ON d1.match_id = m.id
+LEFT JOIN drawings d2 ON d2.match_id = m.id AND d2.id != d1.id
+WHERE d1.id IS NOT NULL AND d2.id IS NOT NULL
+  AND COALESCE(d1.user_id, '00000000-0000-0000-0000-000000000000') < COALESCE(d2.user_id, '00000000-0000-0000-0000-000000000000')
+  AND (m.player1_id = $1 OR m.player2_id = $1)
 `
 
-func (q *Queries) GetTotalMatchesByUsername(ctx context.Context, username string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getTotalMatchesByUsername, username)
+func (q *Queries) GetTotalMatchesByUsername(ctx context.Context, player1ID uuid.NullUUID) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTotalMatchesByUsername, player1ID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const updateMatch = `-- name: UpdateMatch :exec
+UPDATE matches
+SET 
+    drawing1_id = $1,
+    drawing2_id = $2
+WHERE id = $3
+`
+
+type UpdateMatchParams struct {
+	Drawing1ID uuid.NullUUID
+	Drawing2ID uuid.NullUUID
+	ID         uuid.UUID
+}
+
+func (q *Queries) UpdateMatch(ctx context.Context, arg UpdateMatchParams) error {
+	_, err := q.db.ExecContext(ctx, updateMatch, arg.Drawing1ID, arg.Drawing2ID, arg.ID)
+	return err
 }
