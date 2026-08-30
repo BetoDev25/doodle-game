@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-<!-- Taskbar -->
-<nav id="taskbar"></nav>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,17 +8,19 @@
     <link rel="stylesheet" href="/css/taskbar.css">
 </head>
 <body>
-    <!-- Game container -->
-    <div id="game-container">
-        <!-- Game screen (dynamically loaded) -->
-        <div id="game-screen"></div>
-    </div>
+    <!-- Taskbar -->
+    <nav id="taskbar"></nav>
 
-    <script src="/js/drawing.js"></script>
-    <script src="/js/game.js"></script>
+    <!-- Main content -->
+     <body class="main-page-body">
+        <div id="welcome-text">
+            <p>Welcome, <a href="/rules/">read the rules</a> or <a href="/play/">play a match</a></p>
+        </div>
+        <div id="main-page-label">
+            Recent Matches<span class="view-more-link"><a href="/matches/1">view more</a></span>
+        </div>
+     </body>
+
     <script src="/js/taskbar.js"></script>
 </body>
 </html>
-<script>
-    
-</script>

@@ -34,6 +34,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const section = pathParts[3] || 'matches';
     const currentPage = parseInt(pathParts[4]) || 1;
 
+    document.title = `${username}'s Profile`;
+
     // Update mini-nav active state
     document.querySelectorAll('.mini-nav-link').forEach(link => {
         link.classList.remove('active');
@@ -257,12 +259,12 @@ function renderModalDrawings(matchData) {
     p1Container.style.textAlign = 'center';
 
     const canvas1 = document.createElement('canvas');
-    canvas1.width = 300;
-    canvas1.height = 200;
+    canvas1.width = 500;
+    canvas1.height = 400;
     const ctx1 = canvas1.getContext('2d');
 
-    const strokes1 = parseStrokes(matchData.drawing1_finished || matchData.drawing1_doodle);
-    renderStrokesOnCanvas(ctx1, strokes1, 300, 200);
+    //const strokes1 = parseStrokes(matchData.drawing1_finished || matchData.drawing1_doodle);
+    //renderStrokesOnCanvas(ctx1, strokes1, 500, 400);
 
     const label1 = document.createElement('p');
     label1.textContent = matchData.drawing1_username || 'Deleted User';
@@ -277,12 +279,12 @@ function renderModalDrawings(matchData) {
     p2Container.style.textAlign = 'center';
 
     const canvas2 = document.createElement('canvas');
-    canvas2.width = 300;
-    canvas2.height = 200;
+    canvas2.width = 500;
+    canvas2.height = 400;
     const ctx2 = canvas2.getContext('2d');
 
-    const strokes2 = parseStrokes(matchData.drawing2_finished || matchData.drawing2_doodle);
-    renderStrokesOnCanvas(ctx2, strokes2, 300, 200);
+    //const strokes2 = parseStrokes(matchData.drawing2_finished || matchData.drawing2_doodle);
+    //renderStrokesOnCanvas(ctx2, strokes2, 500, 400);
 
     const label2 = document.createElement('p');
     label2.textContent = matchData.drawing2_username || 'Deleted User';
@@ -293,6 +295,40 @@ function renderModalDrawings(matchData) {
     container.appendChild(p2Container);
 
     modalBody.appendChild(container);
+
+    // --- Checkbox (Bottom) ---
+    const checkboxContainer = document.createElement('div');
+    checkboxContainer.className = 'modal-checkbox-container';
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = 'show-doodle-checkbox';
+
+    const checkboxLabel = document.createElement('label');
+    checkboxLabel.htmlFor = 'show-doodle-checkbox';
+    checkboxLabel.textContent = 'Show Doodle';
+
+    checkboxContainer.appendChild(checkbox);
+    checkboxContainer.appendChild(checkboxLabel);
+    container.appendChild(checkboxContainer);
+
+    // Function to render the drawings
+    function renderDrawings(showDoodle) {
+        const strokes1 = parseStrokes(
+            showDoodle ? matchData.drawing2_doodle : matchData.drawing1_finished
+        );
+        const strokes2 = parseStrokes(
+            showDoodle ? matchData.drawing1_doodle : matchData.drawing2_finished
+        );
+        renderStrokesOnCanvas(ctx1, strokes1, 500, 400);
+        renderStrokesOnCanvas(ctx2, strokes2, 500, 400);
+    }
+
+    renderDrawings(false);
+
+    checkbox.addEventListener('change', (e) => {
+        renderDrawings(e.target.checked);
+    });
 }
 
 function renderStrokesOnCanvas(ctx, strokesData, width, height) {

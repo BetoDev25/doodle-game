@@ -176,8 +176,8 @@
     background: white;
     padding: 30px;
     border-radius: 12px;
-    max-width: 700px;
-    width: 90%;
+    max-width: 2000px;
+    width: 70%;
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
@@ -191,6 +191,44 @@
     background: none;
     border: none;
     cursor: pointer;
+}
+
+.modal-drawings-container {
+    position: relative;
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding-top: 40px;
+}
+
+.modal-heart-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+    font-size: 28px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-drawing-wrapper {
+    text-align: center;
+}
+
+.modal-drawing-label {
+    margin: 8px 0 0 0;
+}
+
+.modal-checkbox-container {
+    width: 100%;
+    text-align: center;
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
 }
 
 .pagination {

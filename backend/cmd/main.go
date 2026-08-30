@@ -33,6 +33,11 @@ func main() {
 
 	// END OF TEST - TEMPORARY
 
+	// Main page
+	mux.HandleFunc("/main/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/index.html")
+	}))
+
 	// Profile Sections
 	mux.HandleFunc("/profile/{username}/{section}/{page}", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/profile.html")
@@ -94,7 +99,7 @@ func main() {
 		})
 	*/
 
-	// End of Tesst
+	// End of Test
 
 	mux.HandleFunc("POST /api/logout", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerLogoutUser(w, r, db)
@@ -102,6 +107,11 @@ func main() {
 
 	// Root route - index.html
 	mux.HandleFunc("/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.Redirect(w, r, "/main/", http.StatusFound)
+			return
+		}
+		// For all other paths, serve static files
 		http.FileServer(http.Dir("./static")).ServeHTTP(w, r)
 	}))
 
