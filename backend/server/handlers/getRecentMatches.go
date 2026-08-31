@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -11,13 +10,12 @@ import (
 
 func HandlerGetRecentMatches(w http.ResponseWriter, r *http.Request, db *database.Queries) {
 	pathParts := strings.Split(r.URL.Path, "/")
-	if len(pathParts) < 6 {
+	if len(pathParts) < 4 {
 		RespondWithError(w, http.StatusBadRequest, "Invalid URL", nil)
 		return
 	}
 
-	username := pathParts[3]
-	pageStr := pathParts[5]
+	pageStr := pathParts[3]
 
 	page, _ := strconv.Atoi(pageStr)
 	if page < 1 {
@@ -44,8 +42,6 @@ func HandlerGetRecentMatches(w http.ResponseWriter, r *http.Request, db *databas
 
 	offset := (page - 1) * pageSize
 
-	log.Printf("Page: %d, Offset: %d", page, offset) // DEBUG
-
 	matches, err := db.GetMostRecentMatches(r.Context(), database.GetMostRecentMatchesParams{
 		Limit:  int32(pageSize),
 		Offset: int32(offset),
@@ -56,7 +52,6 @@ func HandlerGetRecentMatches(w http.ResponseWriter, r *http.Request, db *databas
 	}
 
 	RespondWithJSON(w, http.StatusOK, map[string]interface{}{
-		"username":     username,
 		"matches":      matches,
 		"current_page": page,
 		"total_pages":  totalPages,

@@ -2,60 +2,6 @@
 window.currentUser = null;
 
 
-async function getCurrentUser() {
-    const response = await fetch('/api/me');
-    
-    if (response.ok) {
-        const user = await response.json();
-        window.currentUser = {
-            id: user.id,
-            username: user.username,
-            isGuest: user.is_guest,
-            created_at: user.created_at,
-            bio: user.bio,
-            avatar_path: user.avatar_path || '/avatars/default.png',
-        };
-        renderTaskbar();
-        return window.currentUser;
-    }
-
-    let guestUsername = localStorage.getItem('guestUsername');
-    if (!guestUsername) {
-        guestUsername = `Guest${Math.floor(Math.random() * 10000)}`;
-        localStorage.setItem('guestUsername', guestUsername);
-    }
-
-    // Create guest in database
-    const guestRes = await fetch(`/api/guests`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username: guestUsername })
-    });
-    
-    if (guestRes.ok) {
-        const guest = await guestRes.json();
-        console.log('Guest response:', guest);
-        window.currentUser = {
-            id: guest.ID,
-            username: guest.username,
-            isGuest: true,
-            avatar_path: guest.avatar_path || '/avatars/default.png',
-        };
-        renderTaskbar();
-        return window.currentUser;
-    }
-
-    window.currentUser = {
-        username: guestUsername,
-        isGuest: true,
-        id: null,
-    };
-    renderTaskbar();
-    return window.currentUser;
-}
-
 function renderTaskbar() {
     const isGuest = window.currentUser?.isGuest ?? true;
     const username = window.currentUser?.username || '';

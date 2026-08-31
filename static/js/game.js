@@ -259,7 +259,13 @@ function submitDoodle() {
 // ===== Finish Phase =====
 function handleReceiveDoodle(data) {
     opponentDoodle = data.strokes;
-    renderStrokes(data.strokes);
+
+    const canvas = document.getElementById('drawing-canvas');
+    if (canvas) {
+        const ctx = canvas.getContext("2d");
+        renderStrokes(ctx, data.strokes, canvas.width, canvas.height);
+    }
+
     startFinishPhase(60);
 }
 

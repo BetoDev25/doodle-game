@@ -87,29 +87,6 @@ function getStrokes() {
     return strokes;
 }
 
-function renderStrokes(strokesData) {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    strokesData.forEach(stroke => {
-        ctx.strokeStyle = stroke.color || '#000000';
-        ctx.lineWidth = stroke.size || 5;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        
-        if (stroke.points && stroke.points.length > 0) {
-            ctx.beginPath();
-            const first = toAbsolute(stroke.points[0].x, stroke.points[0].y);
-            ctx.moveTo(first.x, first.y);
-            for (let i = 1; i < stroke.points.length; i++) {
-                const point = toAbsolute(stroke.points[i].x, stroke.points[i].y);
-                ctx.lineTo(point.x, point.y);
-            }
-            ctx.stroke();
-        }
-    });
-}
-
 // === Canvas sizing ===
 function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();

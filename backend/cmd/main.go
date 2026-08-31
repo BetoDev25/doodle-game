@@ -38,6 +38,11 @@ func main() {
 		http.ServeFile(w, r, "./static/index.html")
 	}))
 
+	// Matches page
+	mux.HandleFunc("/matches/{page}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/matches.html")
+	}))
+
 	// Profile Sections
 	mux.HandleFunc("/profile/{username}/{section}/{page}", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/profile.html")
@@ -47,9 +52,14 @@ func main() {
 	mux.HandleFunc("GET /api/profile/{username}/favorites/{page}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetRecentFavorites(w, r, db)
 	}))
-	// View Matches
+	// View Matches by Username
 	mux.HandleFunc("GET /api/profile/{username}/matches/{page}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetRecentMatchesByUsername(w, r, db)
+	}))
+
+	// View Matches
+	mux.HandleFunc("GET /api/matches/{page}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetRecentMatches(w, r, db)
 	}))
 
 	mux.HandleFunc("/profile", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {

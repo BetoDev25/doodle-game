@@ -1,13 +1,5 @@
 let userFavorites = [];
 
-async function loadFavorites() {
-    const response = await fetch('/api/favorites');
-    if (response.ok) {
-        const data = await response.json();
-        userFavorites = data.favorites || []; // Array of match IDs
-    }
-}
-
 document.getElementById('modal-close').addEventListener('click', closeModal);
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -81,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             renderDrawings(data, title);
         }
     } else if (section === 'matches') {
-        data = await getRecentMatches(username, currentPage);
+        data = await getRecentMatchesByUsername(username, currentPage);
         title = 'Recent Matches';
         if (data) {
             renderDrawings(data, title);
@@ -135,42 +127,6 @@ document.getElementById('avatar-input').addEventListener('change', async (e) => 
         e.target.value = ''; // Clear input
     }
 });
-
-function parseStrokes(strokesData) {
-    if (!strokesData) {
-        return [];
-    }
-    
-    // Handle the RawMessage structure from sqlc
-    if (strokesData.RawMessage !== undefined) {
-        if (Array.isArray(strokesData.RawMessage)) {
-            return strokesData.RawMessage;
-        }
-        // If RawMessage is a string, parse it
-        if (typeof strokesData.RawMessage === 'string') {
-            try {
-                return JSON.parse(strokesData.RawMessage);
-            } catch (e) {
-                return [];
-            }
-        }
-    }
-    
-    if (typeof strokesData === 'string') {
-        try {
-            const parsed = JSON.parse(strokesData);
-            return parsed;
-        } catch (e) {
-            return [];
-        }
-    }
-    
-    if (Array.isArray(strokesData)) {
-        return strokesData;
-    }
-    
-    return [];
-}
 
 function renderModalDrawings(matchData) {
     const modalBody = document.getElementById('modal-body');
@@ -331,37 +287,6 @@ function renderModalDrawings(matchData) {
     });
 }
 
-function renderStrokesOnCanvas(ctx, strokesData, width, height) {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-
-    if (!strokesData || strokesData.length === 0) {
-        ctx.fillStyle = '#999';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('No strokes', width/2, height/2);
-        return;
-    }
-
-    strokesData.forEach(stroke => {
-        ctx.strokeStyle = stroke.color || '#000000';
-        ctx.lineWidth = stroke.size || 3;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        if (stroke.points && stroke.points.length > 0) {
-            ctx.beginPath();
-            const first = stroke.points[0];
-            ctx.moveTo(first.x * width, first.y * height);
-            for (let i = 1; i < stroke.points.length; i++) {
-                const point = stroke.points[i];
-                ctx.lineTo(point.x * width, point.y * height);
-            }
-            ctx.stroke();
-        }
-    });
-}
-
 function renderAvatar(user) {
     const avatarImg = document.getElementById('avatar-img');
 
@@ -373,39 +298,6 @@ function renderAvatar(user) {
         avatarImg.src = '/avatars/default.png';
         avatarImg.style.display = 'block';
     }
-}
-
-function renderStrokes(ctx, strokesData, width, height) {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
-
-    const parsedData = parseStrokes(strokesData);
-
-    if (!parsedData || parsedData.length === 0) {
-        ctx.fillStyle = '#999';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('No strokes', width/2, height/2);
-        return;
-    }
-
-    parsedData.forEach(stroke => {
-        ctx.strokeStyle = stroke.color || '#000000';
-        ctx.lineWidth = stroke.size || 3;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        if (stroke.points && stroke.points.length > 0) {
-            ctx.beginPath();
-            const first = stroke.points[0];
-            ctx.moveTo(first.x * width, first.y * height);
-            for (let i = 1; i < stroke.points.length; i++) {
-                const point = stroke.points[i];
-                ctx.lineTo(point.x * width, point.y * height);
-            }
-            ctx.stroke();
-        }
-    });
 }
 
 function renderDrawings(data, title) {
@@ -542,36 +434,6 @@ function renderPagination(currentPage, totalPages) {
     }
     
     grid.appendChild(paginationDiv);
-}
-
-async function getRecentFavorites(username, page) {
-    const response = await fetch(`/api/profile/${username}/favorites/${page}`);
-    if (!response.ok) {
-        return null;
-    }
-    const data = await response.json();
-
-    if (page > data.total_pages && data.total_pages > 0) {
-        window.location.href = `/profile/${username}/favorites/${data.total_pages}`;
-        return null;
-    }
-
-    return data;
-}
-
-async function getRecentMatches(username, page) {
-    const response = await fetch(`/api/profile/${username}/matches/${page}`);
-    if (!response.ok) {
-        return null;
-    }
-    const data = await response.json();
-
-    if (page > data.total_pages && data.total_pages > 0) {
-        window.location.href = `/profile/${username}/matches/${data.total_pages}`;
-        return null;
-    }
-
-    return data;
 }
 
 function openModal() {
