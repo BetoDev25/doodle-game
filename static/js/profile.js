@@ -318,9 +318,11 @@ function renderDrawings(data, title) {
     
     items.forEach(item => {
         let dateStr = 'Unknown date';
-        if (item.MatchCreatedAt && item.MatchCreatedAt.Valid) {
+        if (item.MatchCreatedAt) {
             try {
-                const date = new Date(item.MatchCreatedAt.Time);
+                // It's a string, so just use it directly
+                const timeStr = item.MatchCreatedAt.replace('Z', '');
+                const date = new Date(timeStr);
                 if (!isNaN(date.getTime())) {
                     dateStr = date.toLocaleDateString('en-US', {
                         year: 'numeric',
@@ -329,7 +331,7 @@ function renderDrawings(data, title) {
                     });
                 }
             } catch (e) {
-                console.error('Invalid date:', item.MatchCreatedAt);
+                console.error('Invalid date:', item.MatchCreatedAt, e);
             }
         }
 
@@ -375,22 +377,6 @@ function renderDrawings(data, title) {
             strokes = item.Drawing2Finished || item.Drawing2Doodle;
         } else {
             strokes = item.Drawing1Finished || item.Drawing1Doodle;
-        }
-
-        console.log('=== Thumbnail Debug ===');
-        console.log('Match ID:', item.MatchID);
-        console.log('Current username:', username);
-        console.log('Drawing1UserID:', item.Drawing1UserID);
-        console.log('Drawing2UserID:', item.Drawing2UserID);
-        console.log('Selected strokes:', strokes);
-        console.log('Drawing1Finished:', item.Drawing1Finished);
-        console.log('Drawing1Doodle:', item.Drawing1Doodle);
-        console.log('Drawing2Finished:', item.Drawing2Finished);
-        console.log('Drawing2Doodle:', item.Drawing2Doodle);
-        console.log('Strokes type:', typeof strokes);
-        if (strokes) {
-            console.log('Strokes keys:', Object.keys(strokes));
-            console.log('Strokes.RawMessage:', strokes.RawMessage);
         }
         
         renderStrokes(ctx, strokes, 200, 150);

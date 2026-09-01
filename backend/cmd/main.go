@@ -43,6 +43,11 @@ func main() {
 		http.ServeFile(w, r, "./static/matches.html")
 	}))
 
+	// Game Page
+	mux.HandleFunc("/play/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/game.html")
+	}))
+
 	// Profile Sections
 	mux.HandleFunc("/profile/{username}/{section}/{page}", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/profile.html")
@@ -71,7 +76,7 @@ func main() {
 
 	// API routes
 	mux.HandleFunc("POST /api/users", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerCreateUser(w, r, db)
+		handlers.HandlerCreateUser(w, r, db, cfg)
 	}))
 	mux.HandleFunc("POST /api/login", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerLoginUser(w, r, db, cfg)
@@ -96,6 +101,9 @@ func main() {
 	}))
 	mux.HandleFunc("GET /api/favorites", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetFavorites(w, r, db)
+	}))
+	mux.HandleFunc("POST /api/upgrade-guest", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerUpgradeGuest(w, r, db)
 	}))
 
 	/*

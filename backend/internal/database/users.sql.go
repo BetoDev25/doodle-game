@@ -8,6 +8,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -66,7 +67,7 @@ type CreateUserRow struct {
 	ID         uuid.UUID
 	Username   string
 	Email      string
-	CreatedAt  sql.NullTime
+	CreatedAt  time.Time
 	AvatarPath sql.NullString
 }
 
@@ -86,6 +87,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		&i.AvatarPath,
 	)
 	return i, err
+}
+
+const deleteUserByID = `-- name: DeleteUserByID :exec
+DELETE FROM users WHERE id = $1
+`
+
+func (q *Queries) DeleteUserByID(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteUserByID, id)
+	return err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one

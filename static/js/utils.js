@@ -1,56 +1,82 @@
+let currentUserPromise = null;
 
 async function getCurrentUser() {
-    const response = await fetch('/api/me');
-    
-    if (response.ok) {
-        const user = await response.json();
-        window.currentUser = {
-            id: user.id,
-            username: user.username,
-            isGuest: user.is_guest,
-            created_at: user.created_at,
-            bio: user.bio,
-            avatar_path: user.avatar_path || '/avatars/default.png',
-        };
-        renderTaskbar();
+    // If we already have a user, return it
+    if (window.currentUser) {
         return window.currentUser;
     }
-
-    let guestUsername = localStorage.getItem('guestUsername');
-    if (!guestUsername) {
-        guestUsername = `Guest${Math.floor(Math.random() * 10000)}`;
-        localStorage.setItem('guestUsername', guestUsername);
-    }
-
-    // Create guest in database
-    const guestRes = await fetch(`/api/guests`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username: guestUsername })
-    });
     
-    if (guestRes.ok) {
-        const guest = await guestRes.json();
-        console.log('Guest response:', guest);
-        window.currentUser = {
-            id: guest.ID,
-            username: guest.username,
-            isGuest: true,
-            avatar_path: guest.avatar_path || '/avatars/default.png',
-        };
-        renderTaskbar();
-        return window.currentUser;
+    // If there's already a promise in progress, return it
+    if (currentUserPromise) {
+        return currentUserPromise;
     }
 
-    window.currentUser = {
-        username: guestUsername,
-        isGuest: true,
-        id: null,
-    };
-    renderTaskbar();
-    return window.currentUser;
+    currentUserPromise = (async () => {
+        try {
+            const response = await fetch('/api/me');
+            
+            if (response.ok) {
+                const user = await response.json();
+                window.currentUser = {
+                    id: user.id,
+                    username: user.username,
+                    isGuest: user.is_guest,
+                    created_at: user.created_at,
+                    bio: user.bio,
+                    avatar_path: user.avatar_path || '/avatars/default.png',
+                };
+                // Store the actual username from the server
+                localStorage.setItem('guestUsername', user.username);
+                renderTaskbar();
+                return window.currentUser;
+            }
+
+            let guestUsername = localStorage.getItem('guestUsername');
+            
+            // If we have a guest username stored, use it
+            // But also check if this guest already exists by trying to get it
+            if (!guestUsername) {
+                guestUsername = `Guest${Math.floor(Math.random() * 10000)}`;
+                localStorage.setItem('guestUsername', guestUsername);
+            }
+
+            // Create guest in database
+            const guestRes = await fetch(`/api/guests`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: guestUsername })
+            });
+            
+            if (guestRes.ok) {
+                const guest = await guestRes.json();
+                console.log('Guest response:', guest);
+                // Store the exact username from the server
+                localStorage.setItem('guestUsername', guest.username);
+                window.currentUser = {
+                    id: guest.ID,
+                    username: guest.username,
+                    isGuest: true,
+                    avatar_path: guest.avatar_path || '/avatars/default.png',
+                };
+                renderTaskbar();
+                return window.currentUser;
+            }
+
+            window.currentUser = {
+                username: guestUsername,
+                isGuest: true,
+                id: null,
+            };
+            renderTaskbar();
+            return window.currentUser;
+        } finally {
+            currentUserPromise = null;
+        }
+    })();
+
+    return currentUserPromise;
 }
 
 async function loadFavorites() {
@@ -206,4 +232,42 @@ function renderStrokesOnCanvas(ctx, strokesData, width, height) {
             ctx.stroke();
         }
     });
+}
+
+function formatTimeAgo(dateValue) {
+    if (!dateValue) return 'Unknown date';
+
+    let date;
+    if (dateValue.Time !== undefined) {
+        const timeStr = dateValue.Time.replace('Z', '');
+        date = new Date(timeStr);
+    } else {
+        const timeStr = String(dateValue).replace('Z', '');
+        date = new Date(timeStr);
+    }
+
+    if (isNaN(date.getTime())) return 'Unknown date';
+    
+    const now = new Date();
+    const diffSeconds = Math.floor((now - date) / 1000);
+    
+    if (diffSeconds > 86400) {
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    }
+    
+    if (diffSeconds < 60) {
+        return `${diffSeconds} second${diffSeconds !== 1 ? 's' : ''} ago`;
+    }
+    
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) {
+        return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
+    }
+    
+    const diffHours = Math.floor(diffMinutes / 60);
+    return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
 }

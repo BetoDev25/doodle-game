@@ -62,7 +62,7 @@ type GetUserByCookieRow struct {
 	ID         uuid.UUID
 	Username   string
 	IsGuest    sql.NullBool
-	CreatedAt  sql.NullTime
+	CreatedAt  time.Time
 	Bio        string
 	AvatarPath sql.NullString
 }

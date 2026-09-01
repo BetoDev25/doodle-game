@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -47,6 +48,7 @@ func HandlerGetRecentMatches(w http.ResponseWriter, r *http.Request, db *databas
 		Offset: int32(offset),
 	})
 	if err != nil {
+		log.Printf("Error getting matches: %v", err)
 		RespondWithError(w, http.StatusInternalServerError, "Could not get matches", err)
 		return
 	}

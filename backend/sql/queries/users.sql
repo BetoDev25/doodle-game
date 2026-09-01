@@ -45,3 +45,6 @@ WHERE id = $1;
 UPDATE users
 SET avatar_path = $1
 WHERE id = $2;
+
+-- name: DeleteUserByID :exec
+DELETE FROM users WHERE id = $1;

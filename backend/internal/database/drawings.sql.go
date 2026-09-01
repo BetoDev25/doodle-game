@@ -7,8 +7,8 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -105,7 +105,7 @@ type GetDrawingsByUserIDParams struct {
 type GetDrawingsByUserIDRow struct {
 	MatchID         uuid.UUID
 	FinishedStrokes json.RawMessage
-	CreatedAt       sql.NullTime
+	CreatedAt       time.Time
 }
 
 func (q *Queries) GetDrawingsByUserID(ctx context.Context, arg GetDrawingsByUserIDParams) ([]GetDrawingsByUserIDRow, error) {

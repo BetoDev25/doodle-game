@@ -14,6 +14,7 @@
 </p>
 <div id="message" style="margin-top: 20px; color: #333;"></div>
 
+<script src="/js/utils.js"></script>
 <script>
     localStorage.removeItem('lastRoom');
     localStorage.removeItem('lastRoomData');
@@ -69,7 +70,7 @@
                 errorDiv.textContent = '';
         }
     }
-    
+
     async function signUp() {
         const usernameVal = document.getElementById('username').value;
         const passwordVal = document.getElementById('password').value;
@@ -81,7 +82,7 @@
 
         if (usernameError || passwordError || passwordDupeError) {
             messageDiv.style.color = 'red';
-            messageDiv.textContent = 'Please fix all errors before submitting'
+            messageDiv.textContent = 'Please fix all errors before submitting';
             return;
         }
 
@@ -92,8 +93,8 @@
         }
 
         try {
-            const response = await fetch('/api/users', {
-                method:'POST',
+            const response = await fetch('/api/upgrade-guest', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -107,15 +108,18 @@
 
             if (response.ok) {
                 messageDiv.style.color = 'green';
-                messageDiv.textContent = `Success! User "${data.Username}" created!`;
+                messageDiv.textContent = `Success! Account upgraded to "${data.username}"!`;
                 
-                // Load the next panel after successful signup
+                // Clear guest username from localStorage
+                localStorage.removeItem('guestUsername');
+                
+                // Redirect to profile page
                 setTimeout(() => {
-                    window.location.href = '/login.html';
-                }, 1000);
+                    //window.location.href = `/main/`;
+                }, 1500);
             } else {
                 messageDiv.style.color = 'red';
-                messageDiv.textContent = data.error || 'Failed to create user';
+                messageDiv.textContent = data.error || 'Failed to create account';
             }
         } catch (error) {
             messageDiv.style.color = 'red';

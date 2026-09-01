@@ -378,7 +378,10 @@ function showResultScreen(data) {
                     <span class="favorite-text">Favorite This Match</span>
                 </button>
             </div>
-            <button id="playAgainBtn" style="margin-top:20px; padding:10px 30px;">Play Again</button>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+                <button id="playAgainBtn" style="padding:10px 30px;">Play Again</button>
+                <button id="homeBtn" style="padding:10px 30px;">Return Home</button>
+            </div>
         </div>
     `;
     
@@ -406,7 +409,6 @@ function showResultScreen(data) {
                 this.dataset.isFavorite = 'false';
             }
 
-            // API call
             try {
                 const response = await fetch(`/api/favorites/${newState}/${matchId}`, {
                     method: 'POST'
@@ -439,20 +441,11 @@ function showResultScreen(data) {
     }
     
     document.getElementById('playAgainBtn').addEventListener('click', () => {
-        // Reset frontend state
-        matchID = null;
-        role = null;
-        gameState.matchID = null;
-        gameState.role = null;
-        gameState.phase = 'idle';
-        
-        // Make sure WebSocket is still connected
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            showLobbyScreen();
-        } else {
-            connectWebSocket();
-            showLobbyScreen();
-        }
+        window.location.href = '/play/';
+    });
+
+    document.getElementById('homeBtn').addEventListener('click', () => {
+        window.location.href = '/main/';
     });
 }
 

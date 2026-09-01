@@ -8,6 +8,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
@@ -86,7 +87,7 @@ type GetMostRecentMatchesParams struct {
 
 type GetMostRecentMatchesRow struct {
 	MatchID          uuid.UUID
-	MatchCreatedAt   sql.NullTime
+	MatchCreatedAt   time.Time
 	FinishedAt       sql.NullTime
 	FavoritesCount   sql.NullInt32
 	Player1ID        uuid.NullUUID
@@ -181,7 +182,7 @@ type GetMostRecentMatchesByUsernameParams struct {
 
 type GetMostRecentMatchesByUsernameRow struct {
 	MatchID          uuid.UUID
-	MatchCreatedAt   sql.NullTime
+	MatchCreatedAt   time.Time
 	FinishedAt       sql.NullTime
 	FavoritesCount   sql.NullInt32
 	Player1ID        uuid.NullUUID
@@ -287,5 +288,25 @@ type UpdateMatchParams struct {
 
 func (q *Queries) UpdateMatch(ctx context.Context, arg UpdateMatchParams) error {
 	_, err := q.db.ExecContext(ctx, updateMatch, arg.Drawing1ID, arg.Drawing2ID, arg.ID)
+	return err
+}
+
+const upgradeGuestToUser = `-- name: UpgradeGuestToUser :exec
+UPDATE users
+SET 
+    username = $1,
+    is_guest = false,
+    password_hash = $2
+WHERE id = $3 AND is_guest = true
+`
+
+type UpgradeGuestToUserParams struct {
+	Username     string
+	PasswordHash sql.NullString
+	ID           uuid.UUID
+}
+
+func (q *Queries) UpgradeGuestToUser(ctx context.Context, arg UpgradeGuestToUserParams) error {
+	_, err := q.db.ExecContext(ctx, upgradeGuestToUser, arg.Username, arg.PasswordHash, arg.ID)
 	return err
 }

@@ -24,9 +24,13 @@ func Middleware(cfg config.Config, db *database.Queries, next http.HandlerFunc) 
 			"/login.html",
 			"/signup.html",
 			"/static/",
-			"/",
 			"/game.html",
 			"/api/guests",
+		}
+
+		if r.URL.Path == "/" {
+			next.ServeHTTP(w, r)
+			return
 		}
 
 		//check if current path is public

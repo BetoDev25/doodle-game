@@ -3,26 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recent Matches of Doodle Duel</title>
+    <title>Doodle Duel - Game</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/taskbar.css">
     <link rel="stylesheet" href="/css/profile.css">
+    <link rel="stylesheet" href="/css/game.css">
 </head>
 <body>
     <!-- Taskbar -->
     <nav id="taskbar"></nav>
 
-    <!-- Main content -->
-    <div class="page-content">
-        <div id="matches-header">
-            <span id="matches-title">Recent Matches</span>
-            <span id="matches-page">page <span id="page-number">1</span></span>
-        </div>
-        <div id="drawings-grid"></div>
+    <!-- Game container -->
+    <div id="game-container">
+        <!-- Game screen (dynamically loaded) -->
+        <div id="game-screen"></div>
     </div>
 
     <script src="/js/taskbar.js"></script>
     <script src="/js/utils.js"></script>
-    <script src="/js/matches.js"></script>
+    <script src="/js/drawing.js"></script>
+    <script src="/js/game.js"></script>
 </body>
 </html>

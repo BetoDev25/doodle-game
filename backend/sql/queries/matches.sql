@@ -10,6 +10,14 @@ SET
     drawing2_id = $2
 WHERE id = $3;
 
+-- name: UpgradeGuestToUser :exec
+UPDATE users
+SET 
+    username = $1,
+    is_guest = false,
+    password_hash = $2
+WHERE id = $3 AND is_guest = true;
+
 -- name: DeleteMatchByID :exec
 DELETE FROM matches WHERE id = $1;
 

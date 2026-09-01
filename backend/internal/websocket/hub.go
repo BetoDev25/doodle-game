@@ -73,12 +73,9 @@ func (h *Hub) Run() {
 
 				if client.MatchID != "" {
 					matchID := client.MatchID
-					log.Printf("matchID: %s", matchID) // DEBUG
 
 					h.notifyPartnerDisconnected(matchID, client.UserID)
-					log.Printf("deleteIncompleteMatch called!!!") // DEBUG
 					h.deleteIncompleteMatch(matchID)
-					log.Printf("removeFromRoom called!!!") // DEBUG
 					h.removeFromRoom(client)
 				}
 
@@ -99,7 +96,6 @@ func (h *Hub) removeFromQueue(client *Client) {
 }
 
 func (h *Hub) removeFromRoom(client *Client) {
-	log.Printf("removeFromRoom: MatchID is empty for %s", client.UserID) // DEBUG
 	if client.MatchID == "" {
 		log.Printf("MatchID is empty: %s", client.MatchID)
 		return
@@ -107,7 +103,6 @@ func (h *Hub) removeFromRoom(client *Client) {
 
 	clients, ok := h.Rooms[client.MatchID]
 	if !ok {
-		log.Printf("removeFromRoom: Room not found for %s", client.MatchID) // DEBUG
 		return
 	}
 
@@ -170,14 +165,11 @@ func (h *Hub) handleJoinQueue(client *Client) {
 
 	// Try to pair players
 	if len(h.Queue) >= 2 {
-		log.Printf("Queue has 2 players, creating match...") // DEBUG
 		p1 := h.Queue[0]
 		p2 := h.Queue[1]
 		h.Queue = h.Queue[2:]
 
 		h.createMatch(p1, p2)
-	} else {
-		log.Printf("Queue has %d players, waiting for more", len(h.Queue)) // DEBUG
 	}
 }
 
@@ -246,14 +238,11 @@ func (h *Hub) createMatch(p1, p2 *Client) {
 }
 
 func (h *Hub) notifyPartnerDisconnected(matchID string, disconnectedUserID string) {
-	log.Printf("currently inside notifyPartner") // DEBUG
-
 	room, ok := h.Rooms[matchID]
 	if !ok {
 		log.Printf("Room %s NOT FOUND in Rooms map!", matchID) // DEBUG
 		return
 	}
-	log.Printf("Room found, has %d clients", len(room)) // DEBUG
 
 	for _, c := range room {
 		if c.UserID != disconnectedUserID {
@@ -261,7 +250,6 @@ func (h *Hub) notifyPartnerDisconnected(matchID string, disconnectedUserID strin
 			break
 		}
 	}
-	log.Printf("we are done with notifyPartner") // DEBUG
 }
 
 func (h *Hub) deleteIncompleteMatch(matchID string) {

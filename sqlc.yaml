@@ -6,3 +6,17 @@ sql:
     gen:
       go:
         out: "backend/internal/database"
+        sql_package: "database/sql"
+        overrides:
+          - column: "matches.created_at"
+            go_type: "time.Time"
+          - column: "matches.finished_at"
+            go_type: "database/sql.NullTime"
+          - column: "drawings.created_at"
+            go_type: "time.Time"
+          - column: "favorites.created_at"
+            go_type: "time.Time"
+          - column: "users.created_at"
+            go_type: "time.Time"
+          - column: "users.last_active_at"
+            go_type: "database/sql.NullTime"

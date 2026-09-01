@@ -33,6 +33,9 @@ async function getRecentMatches(page) {
 // Override renderDrawings to use time ago format and no pagination
 function renderDrawings(data, title) {
     const grid = document.getElementById('drawings-grid');
+    if (!grid) {
+        return;
+    }
     
     const items = data.matches || [];
 
@@ -85,41 +88,4 @@ function renderDrawings(data, title) {
             openModal();
         });
     });
-}
-
-// Helper function to format time ago
-function formatTimeAgo(dateValue) {
-    if (!dateValue) return 'Unknown date';
-    
-    let date;
-    if (dateValue.Time !== undefined) {
-        date = new Date(dateValue.Time);
-    } else {
-        date = new Date(dateValue);
-    }
-    
-    if (isNaN(date.getTime())) return 'Unknown date';
-    
-    const now = new Date();
-    const diffSeconds = Math.floor((now - date) / 1000);
-    
-    if (diffSeconds > 86400) {
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    }
-    
-    if (diffSeconds < 60) {
-        return `${diffSeconds} second${diffSeconds !== 1 ? 's' : ''} ago`;
-    }
-    
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) {
-        return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
-    }
-    
-    const diffHours = Math.floor(diffMinutes / 60);
-    return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
 }

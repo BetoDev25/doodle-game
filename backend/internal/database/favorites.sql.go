@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -62,8 +63,8 @@ type GetMostRecentFavoritesByUsernameParams struct {
 
 type GetMostRecentFavoritesByUsernameRow struct {
 	MatchID          uuid.UUID
-	MatchCreatedAt   sql.NullTime
-	FavoritedAt      sql.NullTime
+	MatchCreatedAt   time.Time
+	FavoritedAt      time.Time
 	Drawing1ID       uuid.UUID
 	Drawing1UserID   uuid.NullUUID
 	Drawing1Username string

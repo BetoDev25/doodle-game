@@ -18,13 +18,13 @@ type Drawing struct {
 	UserID          uuid.NullUUID
 	DoodleStrokes   json.RawMessage
 	FinishedStrokes json.RawMessage
-	CreatedAt       sql.NullTime
+	CreatedAt       time.Time
 }
 
 type Favorite struct {
 	ID        uuid.UUID
 	UserID    uuid.NullUUID
-	CreatedAt sql.NullTime
+	CreatedAt time.Time
 	MatchID   uuid.UUID
 }
 
@@ -32,7 +32,7 @@ type Match struct {
 	ID             uuid.UUID
 	Player1ID      uuid.NullUUID
 	Player2ID      uuid.NullUUID
-	CreatedAt      sql.NullTime
+	CreatedAt      time.Time
 	FinishedAt     sql.NullTime
 	FavoritesCount sql.NullInt32
 	Drawing1ID     uuid.NullUUID
@@ -51,7 +51,7 @@ type User struct {
 	Username     string
 	Email        string
 	PasswordHash sql.NullString
-	CreatedAt    sql.NullTime
+	CreatedAt    time.Time
 	LastActiveAt sql.NullTime
 	IsGuest      sql.NullBool
 	ExpiresAt    sql.NullTime

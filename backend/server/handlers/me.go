@@ -41,7 +41,7 @@ func HandlerMe(w http.ResponseWriter, r *http.Request, db *database.Queries) {
 		ID:         user.ID,
 		Username:   user.Username,
 		IsGuest:    user.IsGuest.Bool,
-		CreatedAt:  user.CreatedAt.Time,
+		CreatedAt:  user.CreatedAt,
 		Bio:        user.Bio,
 		AvatarPath: avatarPath,
 	})
