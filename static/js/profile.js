@@ -382,24 +382,7 @@ function renderDrawings(data, title) {
         renderStrokes(ctx, strokes, 200, 150);
         
         card.addEventListener('click', () => {
-            const matchData = {
-            match_id: item.MatchID,
-            drawing1_user_id: item.Drawing1UserID,
-            drawing1_username: (item.Player1Username && typeof item.Player1Username === 'object') 
-                ? (item.Player1Username.String || 'Deleted User') 
-                : (item.Player1Username || 'Deleted User'),
-            drawing1_doodle: item.Drawing1Doodle,
-            drawing1_finished: item.Drawing1Finished,
-            drawing2_user_id: item.Drawing2UserID,
-            drawing2_username: (item.Player2Username && typeof item.Player2Username === 'object') 
-                ? (item.Player2Username.String || 'Deleted User') 
-                : (item.Player2Username || 'Deleted User'),
-            drawing2_doodle: item.Drawing2Doodle,
-            drawing2_finished: item.Drawing2Finished
-        };
-            matchData.is_favorite = userFavorites.includes(item.MatchID);
-            renderModalDrawings(matchData);
-            openModal();
+            window.location.href = `/match/${item.MatchID}`;
         });
     });
 }

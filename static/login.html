@@ -39,7 +39,11 @@
                 })
             });
 
+            console.log('Login response status:', response.status); // DEBUG
+            console.log('Login response headers:', response.headers); // DEBUG
+
             const data = await response.json();
+            console.log('Login response data:', data); // DEBUG
 
             if (response.ok) {
                 messageDiv.style.color = 'green';
@@ -53,6 +57,9 @@
                 messageDiv.textContent = data.error || 'Login failed';
             }
         } catch (error) {
+            console.error('Login fetch error:', error); // DEBUG
+            console.error('Error details:', error.message); // DEBUG
+            console.error('Error stack:', error.stack); // DEBUG
             messageDiv.style.color = 'red';
             messageDiv.textContent = 'Error connecting to server';
         }

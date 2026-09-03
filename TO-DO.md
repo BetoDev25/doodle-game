@@ -2,14 +2,14 @@
 
 ## Homepage
 1. Instructions on how to play
-2. Button to start game (redirect to game page)
+~~2. Button to start game (redirect to game page)~~
 3. Newest matches
 
-    a. Display a list of the most recent 5-10 completed matches + pagination
-    b. User should be able to view matches as well as favorite them
+    ~~a. Display a list of the most recent 5-10 completed matches + pagination~~
+    ~~b. User should be able to view matches~~ as well as favorite them
 
 ## Game
-1. (As Guest) Option to create account and save drawing immediately after a match
+~~1. (As Guest) Option to create account and save drawing immediately after a match~~
 ~~2. "Submit drawing" button that prevents drawing and can be un-pressed.~~
 ~~3. Favorite the match~~
 ~~4. Fix issue where incomplete games get archived.~~

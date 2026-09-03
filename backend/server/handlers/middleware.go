@@ -26,6 +26,8 @@ func Middleware(cfg config.Config, db *database.Queries, next http.HandlerFunc) 
 			"/static/",
 			"/game.html",
 			"/api/guests",
+			"/api/login",
+			"/api/users",
 		}
 
 		if r.URL.Path == "/" {

@@ -21,6 +21,31 @@ WHERE id = $3 AND is_guest = true;
 -- name: DeleteMatchByID :exec
 DELETE FROM matches WHERE id = $1;
 
+-- name: GetMatchByID :one
+SELECT 
+    m.id AS match_id,
+    m.created_at AS match_created_at,
+    m.finished_at,
+    m.favorites_count,
+    m.player1_id,
+    m.player2_id,
+    d1.id AS drawing1_id,
+    d1.user_id AS drawing1_user_id,
+    d1.doodle_strokes AS drawing1_doodle,
+    d1.finished_strokes AS drawing1_finished,
+    d2.id AS drawing2_id,
+    d2.user_id AS drawing2_user_id,
+    d2.doodle_strokes AS drawing2_doodle,
+    d2.finished_strokes AS drawing2_finished,
+    COALESCE(u1.username, 'Deleted User') AS player1_username,
+    COALESCE(u2.username, 'Deleted User') AS player2_username
+FROM matches m
+INNER JOIN drawings d1 ON d1.id = m.drawing1_id
+INNER JOIN drawings d2 ON d2.id = m.drawing2_id
+LEFT JOIN users u1 ON u1.id = m.player1_id
+LEFT JOIN users u2 ON u2.id = m.player2_id
+WHERE m.id = $1;
+
 -- name: GetMostRecentMatches :many
 SELECT 
     m.id AS match_id,

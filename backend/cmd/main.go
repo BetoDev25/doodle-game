@@ -18,6 +18,10 @@ func main() {
 	mux, server := config.SetupServer(*env)
 	cfg := config.SetupConfig(*env)
 	db := apiCfg.DB
+	if db == nil {
+		log.Fatal("Database connection is nil")
+	}
+	log.Println("Database connection established successfully")
 	hub := handlers.SetupWebSocket(db)
 
 	// Serve static files from the "static" directory
@@ -67,8 +71,22 @@ func main() {
 		handlers.HandlerGetRecentMatches(w, r, db)
 	}))
 
+	// View single match
+	mux.HandleFunc("/match/{id}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/match.html")
+	}))
+
 	mux.HandleFunc("/profile", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/profile.html")
+	}))
+
+	// Login/Signup pages
+	mux.HandleFunc("/login.html", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/login.html")
+	}))
+
+	mux.HandleFunc("/signup.html", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/signup.html")
 	}))
 
 	// Websocket
@@ -105,6 +123,9 @@ func main() {
 	mux.HandleFunc("POST /api/upgrade-guest", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerUpgradeGuest(w, r, db)
 	}))
+	mux.HandleFunc("GET /api/match/{id}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetMatch(w, r, db)
+	}))
 
 	/*
 		// TEST - TEMPORARY
@@ -123,13 +144,12 @@ func main() {
 		handlers.HandlerLogoutUser(w, r, db)
 	}))
 
-	// Root route - index.html
 	mux.HandleFunc("/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
 			http.Redirect(w, r, "/main/", http.StatusFound)
 			return
 		}
-		// For all other paths, serve static files
+		// For all other paths, return 404
 		http.FileServer(http.Dir("./static")).ServeHTTP(w, r)
 	}))
 

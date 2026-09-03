@@ -13,6 +13,8 @@ import (
 )
 
 func HandlerLoginUser(w http.ResponseWriter, r *http.Request, db *database.Queries, cfg config.Config) {
+	log.Printf("HandlerLoginUser called for path: %s", r.URL.Path)                     // DEBUG
+	log.Printf("HandlerLoginUser: Called! Method: %s, Path: %s", r.Method, r.URL.Path) // DEBUG
 	type params struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
