@@ -37,9 +37,9 @@ func main() {
 
 	// END OF TEST - TEMPORARY
 
-	// Main page
+	// Main page - after logging in
 	mux.HandleFunc("/main/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "./static/index.html")
+		http.ServeFile(w, r, "./static/main.html")
 	}))
 
 	// Matches page
@@ -81,11 +81,11 @@ func main() {
 	}))
 
 	// Login/Signup pages
-	mux.HandleFunc("/login.html", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/login/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/login.html")
 	}))
 
-	mux.HandleFunc("/signup.html", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/signup/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/signup.html")
 	}))
 
@@ -146,7 +146,7 @@ func main() {
 
 	mux.HandleFunc("/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
-			http.Redirect(w, r, "/main/", http.StatusFound)
+			http.ServeFile(w, r, "./static/index.html")
 			return
 		}
 		// For all other paths, return 404

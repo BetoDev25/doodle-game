@@ -1,0 +1,88 @@
+.welcome-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 40px;
+    text-align: center;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.welcome-container h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.welcome-description {
+    font-size: 18px;
+    color: #555;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.rules-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: left;
+    margin: 30px 0;
+}
+
+.rule {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 12px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.rule-number {
+    background: #4A90D9;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.rule p {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.play-btn {
+    display: inline-block;
+    padding: 16px 48px;
+    background: #4A90D9;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 12px;
+    transition: background 0.2s;
+    margin: 20px 0;
+}
+
+.play-btn:hover {
+    background: #3a7bc8;
+}
+
+.login-prompt {
+    font-size: 14px;
+    color: #666;
+}
+
+.login-prompt a {
+    color: #4A90D9;
+    text-decoration: none;
+}
+
+.login-prompt a:hover {
+    text-decoration: underline;
+}

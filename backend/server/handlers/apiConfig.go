@@ -23,7 +23,6 @@ func SetupAPIConfig(env string) *APIConfig {
 	} else {
 		envFile = ".env.dev"
 	}
-	log.Printf("Loading env file: %s", envFile)
 
 	err := godotenv.Load(envFile)
 	if err != nil {

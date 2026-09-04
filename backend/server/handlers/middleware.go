@@ -51,11 +51,7 @@ func Middleware(cfg config.Config, db *database.Queries, next http.HandlerFunc) 
 		*/
 
 		//Get user_id
-		user, err := db.GetUserByCookie(r.Context(), sessionToken)
-		if err != nil {
-			http.Redirect(w, r, "/login.html", http.StatusSeeOther)
-			return
-		}
+		user, _ := db.GetUserByCookie(r.Context(), sessionToken)
 
 		//Add user info to context
 		ctx := context.WithValue(r.Context(), "user_id", user.ID)

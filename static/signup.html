@@ -1,129 +1,143 @@
-<h1>Sign Up</h1>
-<input type="text" id="username" placeholder="username" oninput="validateUsername(this.value)">
-<div id="usernameError" style="color: red; font-size: 12px; margin-top: 5px; margin-bottom: 10px;"></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Doodle Duel</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/taskbar.css">
+    <link rel="stylesheet" href="/static/css/login.css">
+</head>
+<body>
+    <nav id="taskbar"></nav>
 
-<input type="password" id="password" placeholder="password" oninput="validatePassword(this.value)">
-<div id="passwordError" style="color: red; font-size: 12px; margin-top: 5px; margin-bottom: 10px;"></div>
+    <div class="auth-container">
+        <h1>Sign Up</h1>
+        <form id="signupForm" onsubmit="signUp(event)">
+            <input type="text" id="username" placeholder="Username" oninput="validateUsername(this.value)" required>
+            <div id="usernameError" class="auth-error"></div>
 
-<input type="password" id="passwordDupe" placeholder="retype password" oninput="passwordEqual(this.value)">
-<div id="passwordDupeError" style="color: red; font-size: 12px; margin-top: 5px; margin-bottom: 10px;"></div>
+            <input type="password" id="password" placeholder="Password" oninput="validatePassword(this.value)" required>
+            <div id="passwordError" class="auth-error"></div>
 
-<button onclick="signUp()">Sign Up</button>
-<p style="margin-top: 10px;">
-    <a href="/login.html">log in instead</a>
-</p>
-<div id="message" style="margin-top: 20px; color: #333;"></div>
+            <input type="password" id="passwordDupe" placeholder="Retype Password" oninput="passwordEqual(this.value)" required>
+            <div id="passwordDupeError" class="auth-error"></div>
 
-<script src="/js/utils.js"></script>
-<script>
-    localStorage.removeItem('lastRoom');
-    localStorage.removeItem('lastRoomData');
-    function passwordEqual(val) {
-        const val2 = document.getElementById("password").value
-        const errorDiv = document.getElementById("passwordDupeError")
-        if (val != val2) {
-            errorDiv.textContent = 'Passwords not equal';
-        } else {
-            errorDiv.textContent = '';
-        }
-    }
-    
-    function validateUsername(val) {
-        const errorDiv = document.getElementById("usernameError")
-        switch (true) {
-            case !val:
-                errorDiv.textContent = 'Username is required';
-                break;
-            case val.length < 4:
-                errorDiv.textContent = 'Username must be at least 4 characters';
-                break;
-            case val.length > 20:
-                errorDiv.textContent = 'Username cannot exceed 20 characters';
-                break;
-            case /\s/.test(val):
-                errorDiv.textContent = 'Username cannot contain spaces';
-                break;
-            default:
-                errorDiv.textContent = '';
-        }
-    }
+            <button type="submit">Sign Up</button>
+        </form>
+        <div id="message"></div>
+        <p class="auth-link">
+            <a href="/login/">log in instead</a>
+        </p>
+    </div>
 
-    function validatePassword(val) {
-        const errorDiv = document.getElementById("passwordError")
-        switch (true) {
-            case !val:
-                errorDiv.textContent = 'Password is required';
-                break;
-            case val.length < 8:
-                errorDiv.textContent = 'Password must be at least 8 characters';
-                break;
-            case val.length > 40:
-                errorDiv.textContent = 'Password cannot exceed 40 characters';
-                break;
-            case !/[0-9]/.test(val):
-                errorDiv.textContent = 'Password must contain at least one number';
-                break;
-            case /\s/.test(val):
-                errorDiv.textContent = 'Password cannot contain spaces';
-                break;
-            default:
-                errorDiv.textContent = '';
-        }
-    }
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/taskbar.js"></script>
+    <script>
+        localStorage.removeItem('lastRoom');
+        localStorage.removeItem('lastRoomData');
 
-    async function signUp() {
-        const usernameVal = document.getElementById('username').value;
-        const passwordVal = document.getElementById('password').value;
-        const messageDiv = document.getElementById('message');
-        
-        const usernameError = document.getElementById('usernameError').textContent;
-        const passwordError = document.getElementById('passwordError').textContent;
-        const passwordDupeError = document.getElementById('passwordDupeError').textContent;
-
-        if (usernameError || passwordError || passwordDupeError) {
-            messageDiv.style.color = 'red';
-            messageDiv.textContent = 'Please fix all errors before submitting';
-            return;
-        }
-
-        if (!usernameVal || !passwordVal) {
-            messageDiv.style.color = 'red';
-            messageDiv.textContent = 'Please enter both username and password';
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/upgrade-guest', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username: usernameVal,
-                    password: passwordVal
-                })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                messageDiv.style.color = 'green';
-                messageDiv.textContent = `Success! Account upgraded to "${data.username}"!`;
-                
-                // Clear guest username from localStorage
-                localStorage.removeItem('guestUsername');
-                
-                // Redirect to profile page
-                setTimeout(() => {
-                    //window.location.href = `/main/`;
-                }, 1500);
+        function passwordEqual(val) {
+            const val2 = document.getElementById("password").value;
+            const errorDiv = document.getElementById("passwordDupeError");
+            if (val !== val2) {
+                errorDiv.textContent = 'Passwords do not match';
             } else {
-                messageDiv.style.color = 'red';
-                messageDiv.textContent = data.error || 'Failed to create account';
+                errorDiv.textContent = '';
             }
-        } catch (error) {
-            messageDiv.style.color = 'red';
-            messageDiv.textContent = 'Error connecting to server';
         }
-    }
-</script>
+
+        function validateUsername(val) {
+            const errorDiv = document.getElementById("usernameError");
+            if (!val) {
+                errorDiv.textContent = 'Username is required';
+            } else if (val.length < 4) {
+                errorDiv.textContent = 'Username must be at least 4 characters';
+            } else if (val.length > 20) {
+                errorDiv.textContent = 'Username cannot exceed 20 characters';
+            } else if (/\s/.test(val)) {
+                errorDiv.textContent = 'Username cannot contain spaces';
+            } else {
+                errorDiv.textContent = '';
+            }
+        }
+
+        function validatePassword(val) {
+            const errorDiv = document.getElementById("passwordError");
+            if (!val) {
+                errorDiv.textContent = 'Password is required';
+            } else if (val.length < 8) {
+                errorDiv.textContent = 'Password must be at least 8 characters';
+            } else if (val.length > 40) {
+                errorDiv.textContent = 'Password cannot exceed 40 characters';
+            } else if (!/[0-9]/.test(val)) {
+                errorDiv.textContent = 'Password must contain at least one number';
+            } else if (/\s/.test(val)) {
+                errorDiv.textContent = 'Password cannot contain spaces';
+            } else {
+                errorDiv.textContent = '';
+            }
+        }
+
+        async function signUp(event) {
+            event.preventDefault();
+
+            const usernameVal = document.getElementById('username').value;
+            const passwordVal = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+
+            const usernameError = document.getElementById('usernameError').textContent;
+            const passwordError = document.getElementById('passwordError').textContent;
+            const passwordDupeError = document.getElementById('passwordDupeError').textContent;
+
+            if (usernameError || passwordError || passwordDupeError) {
+                messageDiv.style.color = 'red';
+                messageDiv.textContent = 'Please fix all errors before submitting';
+                return;
+            }
+
+            if (!usernameVal || !passwordVal) {
+                messageDiv.style.color = 'red';
+                messageDiv.textContent = 'Please enter both username and password';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/upgrade-guest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: usernameVal,
+                        password: passwordVal
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.style.color = 'green';
+                    messageDiv.textContent = `Success! Account upgraded to "${data.username}"!`;
+                    
+                    localStorage.removeItem('guestUsername');
+                    
+                    setTimeout(() => {
+                        window.location.href = '/main/';
+                    }, 1500);
+                } else if (response.status === 409) {
+                    messageDiv.style.color = 'red';
+                    messageDiv.textContent = 'Username is already taken';
+                } else {
+                    messageDiv.style.color = 'red';
+                    messageDiv.textContent = data.error || 'Failed to create account';
+                }
+            } catch (error) {
+                messageDiv.style.color = 'red';
+                messageDiv.textContent = 'Error connecting to server';
+                console.error('Signup error:', error);
+            }
+        }
+    </script>
+</body>
+</html>

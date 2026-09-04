@@ -1,67 +1,65 @@
-<h1>Login</h1>
-<form onsubmit="login(event)">
-    <input type="text" id="username" placeholder="username" onkeypress="if(event.key==='Enter')login(event)">
-    <div style="height: 10px;"></div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Doodle Duel</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/taskbar.css">
+    <link rel="stylesheet" href="/static/css/login.css">
+</head>
+<body>
+    <nav id="taskbar"></nav>
 
-    <input type="password" id="password" placeholder="password" onkeypress="if(event.key==='Enter')login(event)">
-    <div style="height: 10px;"></div>
+    <div class="auth-container">
+        <h1>Log In</h1>
+        <form id="loginForm" onsubmit="login(event)">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Log In</button>
+        </form>
+        <div id="message"></div>
+        <p class="auth-link">
+            <a href="/signup/">create an account instead</a>
+        </p>
+    </div>
 
-    <button type="submit">Log in</button>
-    <div id="message" style="margin-top: 10px; color: #333;"></div>
-    <p style="margin-top: 10px;">
-        <a href="/signup.html">create new user</a>
-    </p>
-</form>
-
-<script>
-    async function login(event) {
-        event.preventDefault();
-
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        const messageDiv = document.getElementById('message');
-
-        if (!username || !password) {
-            messageDiv.style.color = 'red';
-            messageDiv.textContent = 'Please enter both username and password';
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  username: username,
-                  password: password  
-                })
-            });
-
-            console.log('Login response status:', response.status); // DEBUG
-            console.log('Login response headers:', response.headers); // DEBUG
-
-            const data = await response.json();
-            console.log('Login response data:', data); // DEBUG
-
-            if (response.ok) {
-                messageDiv.style.color = 'green';
-                messageDiv.textContent = 'Login successful!';
-
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 1000);
-            } else {
+    <script src="/static/js/taskbar.js"></script>
+    <script>
+        async function login(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+            
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    messageDiv.style.color = 'green';
+                    messageDiv.textContent = 'Login successful! Redirecting...';
+                    setTimeout(() => {
+                        window.location.href = '/main/';
+                    }, 1000);
+                } else {
+                    messageDiv.style.color = 'red';
+                    messageDiv.textContent = data.error || 'Invalid username or password';
+                }
+            } catch (error) {
                 messageDiv.style.color = 'red';
-                messageDiv.textContent = data.error || 'Login failed';
+                messageDiv.textContent = 'Error connecting to server';
+                console.error('Login error:', error);
             }
-        } catch (error) {
-            console.error('Login fetch error:', error); // DEBUG
-            console.error('Error details:', error.message); // DEBUG
-            console.error('Error stack:', error.stack); // DEBUG
-            messageDiv.style.color = 'red';
-            messageDiv.textContent = 'Error connecting to server';
         }
-    }
-</script>
+    </script>
+</body>
+</html>

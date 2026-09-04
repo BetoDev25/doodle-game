@@ -355,100 +355,9 @@ function submitFinishedDrawing() {
 function handleMatchComplete(data) {
     console.log('Match complete data:', data);
     clearInterval(gameInterval);
-    showResultScreen(data);
+    window.location.href = `/match/${data.match_id}`;
 }
-
-function showResultScreen(data) {
-    document.getElementById('game-screen').innerHTML = `
-        <div class="result-container">
-            <h2>🏆 Match Complete!</h2>
-            <div style="display:flex; gap:20px; justify-content:center;">
-                <div>
-                    <h3>Your Drawing</h3>
-                    <canvas id="yourDrawingCanvas" width="300" height="200" style="border:2px solid #ddd;"></canvas>
-                </div>
-                <div>
-                    <h3>Opponent's Drawing</h3>
-                    <canvas id="theirDrawingCanvas" width="300" height="200" style="border:2px solid #ddd;"></canvas>
-                </div>
-            </div>
-            <div class="favorite-container">
-                <button class="favorite-btn" data-match-id="${data.match_id}" data-is-favorite="false">
-                    <span class="heart-icon">🤍</span>
-                    <span class="favorite-text">Favorite This Match</span>
-                </button>
-            </div>
-            <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
-                <button id="playAgainBtn" style="padding:10px 30px;">Play Again</button>
-                <button id="homeBtn" style="padding:10px 30px;">Return Home</button>
-            </div>
-        </div>
-    `;
-    
-    // Render both drawings
-    renderResultDrawing('yourDrawingCanvas', data.your_drawing);
-    renderResultDrawing('theirDrawingCanvas', data.their_drawing);
-
-    const favBtn = document.querySelector('.favorite-btn');
-    if (favBtn) {
-        favBtn.addEventListener('click', async function() {
-            const matchId = this.dataset.matchId;
-            const isFavorite = this.dataset.isFavorite === 'true';
-            const newState = !isFavorite;
-
-            const heartIcon = this.querySelector('.heart-icon');
-            const favText = this.querySelector('.favorite-text');
-
-            if (newState) {
-                heartIcon.textContent = '❤️';
-                favText.textContent = 'Favorited Match';
-                this.dataset.isFavorite = 'true';
-            } else {
-                heartIcon.textContent = '🤍';
-                favText.textContent = 'Favorite This Match';
-                this.dataset.isFavorite = 'false';
-            }
-
-            try {
-                const response = await fetch(`/api/favorites/${newState}/${matchId}`, {
-                    method: 'POST'
-                });
-                if (!response.ok) {
-                    if (newState) {
-                        heartIcon.textContent = '🤍';
-                        favText.textContent = 'Favorite This Match';
-                        this.dataset.isFavorite = 'false';
-                    } else {
-                        heartIcon.textContent = '❤️';
-                        favText.textContent = 'Favorited Match';
-                        this.dataset.isFavorite = 'true';
-                    }
-                    alert('Failed to update favorite');
-                }
-            } catch (error) {
-                if (newState) {
-                    heartIcon.textContent = '🤍';
-                    favText.textContent = 'Favorite This Match';
-                    this.dataset.isFavorite = 'false';
-                } else {
-                    heartIcon.textContent = '❤️';
-                    favText.textContent = 'Favorited Match';
-                    this.dataset.isFavorite = 'true';
-                }
-                alert('Error connecting to server');
-            }
-        });
-    }
-    
-    document.getElementById('playAgainBtn').addEventListener('click', () => {
-        window.location.href = '/play/';
-    });
-
-    document.getElementById('homeBtn').addEventListener('click', () => {
-        window.location.href = '/main/';
-    });
-}
-
+/*
 function renderResultDrawing(canvasId, strokesData) {
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext('2d');
@@ -476,6 +385,7 @@ function renderResultDrawing(canvasId, strokesData) {
         });
     }
 }
+*/
 
 // ===== Initialize =====
 showLobbyScreen();

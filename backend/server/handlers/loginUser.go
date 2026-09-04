@@ -45,7 +45,7 @@ func HandlerLoginUser(w http.ResponseWriter, r *http.Request, db *database.Queri
 	session, err := db.CreateSession(r.Context(), database.CreateSessionParams{
 		Token:     token,
 		UserID:    user.ID,
-		ExpiresAt: time.Now().Add(8 * time.Hour),
+		ExpiresAt: time.Now().Add(100 * 365 * 24 * time.Hour),
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Couldn't create session", err)

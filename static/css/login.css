@@ -1,0 +1,81 @@
+/* Auth Pages (Login / Signup) */
+.auth-container {
+    max-width: 400px;
+    margin: 80px auto;
+    padding: 40px;
+    text-align: center;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.auth-container h1 {
+    font-size: 36px;
+    margin-bottom: 30px;
+}
+
+.auth-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.auth-container input {
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.2s;
+}
+
+.auth-container input:focus {
+    outline: none;
+    border-color: #4A90D9;
+}
+
+.auth-container button {
+    padding: 14px;
+    background: #4A90D9;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.auth-container button:hover {
+    background: #3a7bc8;
+}
+
+.auth-container #message {
+    margin-top: 16px;
+    font-size: 14px;
+    min-height: 24px;
+}
+
+.auth-link {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #666;
+}
+
+.auth-link a {
+    color: #4A90D9;
+    text-decoration: none;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
+}
+
+/* Auth Pages - Error messages */
+.auth-error {
+    color: red;
+    font-size: 12px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    min-height: 18px;
+    text-align: left;
+}

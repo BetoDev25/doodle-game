@@ -1,32 +1,53 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // Wait for taskbar to load the user
     await new Promise(resolve => setTimeout(resolve, 100));
+
+    const user = window.currentUser;
+    if (!user || user.isGuest) {
+        // Redirect to welcome page
+        window.location.href = '/';
+        return;
+    }
     
     await loadFavorites();
 
-    // Get page number from URL
-    const pathParts = window.location.pathname.split('/');
-    const page = parseInt(pathParts[2]) || 1;
-    
-    // Update page number in header
-    document.getElementById('page-number').textContent = page;
-
-    // Load matches
-    const data = await getRecentMatches(page);
+    const data = await getRecentMatches(1);
     if (data) {
-        renderMatches(data);
+        // Only show first 10 matches
+        const firstEight = data.matches ? data.matches.slice(0, 10) : [];
+        const trimmedData = {
+            ...data,
+            matches: firstEight
+        };
+        renderDrawings(trimmedData, 'Recent Matches');
     }
 });
 
-function renderMatches(data) {
+async function getRecentMatches(page) {
+    const response = await fetch(`/api/matches/${page}`);
+    if (!response.ok) {
+        return null;
+    }
+    const data = await response.json();
+
+    if (page > data.total_pages && data.total_pages > 0) {
+        window.location.href = `/?page=${data.total_pages}`;
+        return null;
+    }
+
+    return data;
+}
+
+// Override renderDrawings to use time ago format and no pagination
+function renderDrawings(data, title) {
     const grid = document.getElementById('drawings-grid');
+    if (!grid) {
+        return;
+    }
     
     const items = data.matches || [];
-    const totalPages = data.total_pages || 0;
-    const currentPage = data.current_page || 1;
 
     if (items.length === 0) {
-        grid.innerHTML = `<p>No matches yet.</p>`;
+        grid.innerHTML = `<h2>${title}</h2><p>No matches yet.</p>`;
         return;
     }
 
@@ -45,22 +66,7 @@ function renderMatches(data) {
     
     html += '</div>';
 
-    // Pagination
-    html += `<div class="pagination">`;
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
-    }
-    html += `</div>`;
-
     grid.innerHTML = html;
-
-    // Pagination click listeners
-    document.querySelectorAll('.page-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const page = btn.dataset.page;
-            window.location.href = `/matches/${page}`;
-        });
-    });
 
     // Render thumbnails
     document.querySelectorAll('.drawing-card').forEach((card, index) => {

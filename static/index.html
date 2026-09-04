@@ -3,28 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Doodle Duel</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/taskbar.css">
-    <link rel="stylesheet" href="/css/profile.css">
+    <title>Welcome to Doodle Duel</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/taskbar.css">
+    <link rel="stylesheet" href="/static/css/welcome.css">
 </head>
 <body>
     <!-- Taskbar -->
     <nav id="taskbar"></nav>
 
-    <!-- Main content -->
-     <div class="page-content main-page-content">
-        <div id="welcome-text">
-            <p>Welcome, <a href="/rules/">read the rules</a> or <a href="/play/">play a match</a></p>
+    <!-- Welcome content -->
+    <div class="welcome-container">
+        <h1>🎨 Welcome to Doodle Duel!</h1>
+        <p class="welcome-description">
+            Doodle Duel is a fun drawing game where you and another player take turns 
+            doodling and finishing each other's drawings. Here's how it works:
+        </p>
+        <div class="rules-section">
+            <div class="rule">
+                <span class="rule-number">1</span>
+                <p>You and an opponent each have 10 seconds to draw a quick doodle.</p>
+            </div>
+            <div class="rule">
+                <span class="rule-number">2</span>
+                <p>You swap doodles and have 60 seconds to finish your opponent's drawing.</p>
+            </div>
+            <div class="rule">
+                <span class="rule-number">3</span>
+                <p>Both drawings are displayed side by side at the end.</p>
+            </div>
         </div>
-        <div id="main-page-label">
-            Recent Matches<span class="view-more-link"><a href="/matches/1">view all</a></span>
-        </div>
-        <div id="drawings-grid"></div>
-     </div>
+        <a href="/play/" class="play-btn">🎮 Play Now</a>
+        <p class="login-prompt">
+            Already have an account? <a href="/login.html">Log in</a>
+        </p>
+    </div>
 
-    <script src="/js/taskbar.js"></script>
-    <script src="/js/utils.js"></script>
-    <script src="/js/index.js"></script>
+    <script src="/static/js/taskbar.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/index.js"></script>
 </body>
 </html>
