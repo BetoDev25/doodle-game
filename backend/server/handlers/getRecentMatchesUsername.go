@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -56,8 +55,6 @@ func HandlerGetRecentMatchesByUsername(w http.ResponseWriter, r *http.Request, d
 	}
 
 	offset := (page - 1) * pageSize
-
-	log.Printf("Page: %d, Offset: %d", page, offset)
 
 	matches, err := db.GetMostRecentMatchesByUsername(r.Context(), database.GetMostRecentMatchesByUsernameParams{
 		Player1ID: userID,

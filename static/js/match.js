@@ -13,14 +13,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Fetch the match data
     try {
         const response = await fetch(`/api/match/${matchId}`);
+        
         if (!response.ok) {
-            throw new Error('Match not found');
+            // Try to parse the error message from the response
+            let errorMessage = 'Match not found';
+            try {
+                const errorData = await response.json();
+                if (errorData.message) {
+                    errorMessage = errorData.message;
+                }
+            } catch (e) {
+                // If response isn't JSON, use default message
+            }
+            
+            // Redirect to error page with the message
+            window.location.href = `/error?message=${encodeURIComponent(errorMessage)}`;
+            return;
         }
+        
         const data = await response.json();
         renderMatchPage(data);
     } catch (error) {
         console.error('Error loading match:', error);
-        document.getElementById('match-container').innerHTML = '<p>Match not found</p>';
+        window.location.href = `/error?message=${encodeURIComponent('Error connecting to server')}`;
     }
 });
 

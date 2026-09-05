@@ -20,7 +20,7 @@ function renderTaskbar() {
             ` : `
                 <div style="display:flex; align-items:center; gap:10px;">
                     <!-- Avatar -->
-                    <div id="taskbar-avatar" style="width:32px; height:32px; overflow:hidden; border:2px solid #ddd; background:#4A90D9; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:14px; border-radius:50%;">
+                    <div id="taskbar-avatar" style="width:32px; height:32px; overflow:hidden; border:2px solid #ddd; background:#4A90D9; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:14px;">
                         <img id="taskbar-avatar-img" width="32" height="32" alt="Avatar" style="object-fit:cover;">
                     </div>
                     <!-- Username link -->

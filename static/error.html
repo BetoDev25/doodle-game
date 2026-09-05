@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Doodle Duel</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/taskbar.css">
+    <link rel="stylesheet" href="/static/css/error.css">
+</head>
+<body>
+    <nav id="taskbar"></nav>
+
+    <div class="error-container">
+        <h1>404 not found</h1>
+        <p id="error-message">Something went wrong.</p>
+        <a href="/main/" class="error-home-btn">Go Home</a>
+    </div>
+
+    <script src="/static/js/taskbar.js"></script>
+    <script>
+        // Get error message from URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const message = urlParams.get('message');
+        
+        if (message) {
+            document.getElementById('error-message').textContent = message;
+        }
+
+        // If there's no message and it's a 404, show default
+        if (!message && document.referrer) {
+            document.getElementById('error-message').textContent = 'Page not found';
+        }
+    </script>
+</body>
+</html>

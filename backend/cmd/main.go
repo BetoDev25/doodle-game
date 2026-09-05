@@ -2,8 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	_ "github.com/lib/pq"
 
@@ -57,6 +59,17 @@ func main() {
 		http.ServeFile(w, r, "./static/profile.html")
 	})
 
+	// Redirect /profile/{username} to /profile/{username}/matches/1
+	mux.HandleFunc("/profile/{username}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		pathParts := strings.Split(r.URL.Path, "/")
+		if len(pathParts) >= 3 {
+			username := pathParts[2]
+			http.Redirect(w, r, fmt.Sprintf("/profile/%s/matches/1", username), http.StatusFound)
+			return
+		}
+		http.Redirect(w, r, "/", http.StatusFound)
+	}))
+
 	// View Favorites
 	mux.HandleFunc("GET /api/profile/{username}/favorites/{page}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetRecentFavorites(w, r, db)
@@ -89,12 +102,20 @@ func main() {
 		http.ServeFile(w, r, "./static/signup.html")
 	}))
 
+	// Error page
+	mux.HandleFunc("/error", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/error.html")
+	}))
+
 	// Websocket
 	mux.HandleFunc("/ws", handlers.ServeWebSocket(hub, db))
 
 	// API routes
 	mux.HandleFunc("POST /api/users", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerCreateUser(w, r, db, cfg)
+	}))
+	mux.HandleFunc("GET /api/users/{username}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetUserByUsername(w, r, db)
 	}))
 	mux.HandleFunc("POST /api/login", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerLoginUser(w, r, db, cfg)

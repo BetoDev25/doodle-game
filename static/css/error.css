@@ -1,0 +1,42 @@
+/* Error Page */
+.error-container {
+    max-width: 500px;
+    margin: 100px auto;
+    padding: 40px;
+    text-align: center;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.error-container h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.error-container .error-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.error-container p {
+    font-size: 18px;
+    color: #555;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.error-home-btn {
+    display: inline-block;
+    padding: 12px 32px;
+    background: #4A90D9;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.error-home-btn:hover {
+    background: #3a7bc8;
+}

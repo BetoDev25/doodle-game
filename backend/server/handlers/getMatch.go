@@ -27,7 +27,7 @@ func HandlerGetMatch(w http.ResponseWriter, r *http.Request, db *database.Querie
 	match, err := db.GetMatchByID(r.Context(), matchID)
 	if err != nil {
 		log.Printf("Error getting match: %v", err)
-		RespondWithError(w, http.StatusNotFound, "Match not found", err)
+		RespondWithError(w, http.StatusNotFound, "Match does not exist or was deleted", err)
 		return
 	}
 
