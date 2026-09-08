@@ -1,0 +1,227 @@
+.container {
+    display: flex;
+    gap: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    align-items: stretch;
+}
+
+#game-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    max-width: 1000px;
+    padding: 40px; /* top right bottom left */
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.drawing-board {
+    flex: 1; /* This takes up the remaining space */
+    max-width: 600px; /* Or whatever max you want */
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    height: 500px;
+    min-height: 500px;
+}
+
+#drawing-canvas {
+    width: 100%;
+    height: 100%;
+    background: white;
+    cursor: crosshair;
+    display: block;
+    border: none;
+    border-radius: 4px;
+}
+
+.trash-wrapper {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    flex-shrink: 0;
+    justify-content: top;
+    width: 50px;
+    padding-top: 8px;
+}
+
+.trash-btn,
+.undo-btn {
+    font-size: 28px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background-color 0.2s, transform 0.2s;
+    line-height: 1;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trash-btn:hover,
+.undo-btn:hover {
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
+.trash-btn:active,
+.undo-btn:active {
+    transform: scale(0.9);
+}
+
+.undo-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Controls Panel */
+.controls-board {
+    width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex-shrink: 0;
+    justify-content: top;
+    align-items: center;
+}
+
+.row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.title {
+    font-size: 14px;
+    color: #333;
+    font-weight: bold;
+}
+
+.options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Size buttons */
+.sizes .option {
+    background: transparent;
+    padding: 4px;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.sizes .option:hover {
+    background: #e8f0fe;
+}
+
+.sizes .option.active {
+    border-color: #4A90D9;
+    background: #e8f0fe;
+}
+
+.sizes .option svg {
+    display: block;
+}
+
+/* Color buttons */
+.colors .options {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    gap: 6px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    justify-content: start;
+}
+
+.colors .option {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    padding: 0;
+    margin: 0;
+    border: 4px solid transparent;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.eraser-option {
+    background: white !important;
+    border: 2px solid #ddd !important; /* Default outline like white color */
+    font-size: 16px;
+}
+
+.eraser-option:hover {
+    transform: scale(1.1);
+    border-color: #333 !important; /* Darker outline on hover */
+}
+
+.eraser-option.selected {
+    border-color: #333 !important; /* Dark outline when selected like other colors */
+    transform: scale(1.1);
+    background: #e8f0fe !important;
+}
+
+.colors .option:hover {
+    transform: scale(1.1);
+}
+
+.colors .option.selected {
+    border-color: #333;
+    transform: scale(1.1);
+}
+
+/* White color needs a visible border */
+.colors .option[style*="background-color: #FFFFFF"] {
+    border-color: #ccc;
+}
+
+.colors .option[style*="background-color: #FFFFFF"]:hover,
+.colors .option[style*="background-color: #FFFFFF"].selected {
+    border-color: #333;
+}
+
+/* Buttons */
+.buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.buttons button {
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s;
+}
+
+.clear-canvas {
+    background: #ff6b6b;
+    color: white;
+}
+
+.clear-canvas:hover {
+    background: #e55a5a;
+}
