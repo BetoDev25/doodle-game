@@ -225,3 +225,15 @@
 .clear-canvas:hover {
     background: #e55a5a;
 }
+
+#timerDisplay {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+}
+
+#phaseDisplay {
+    font-size: 18px;
+    color: #666;
+    padding: 20px;
+}

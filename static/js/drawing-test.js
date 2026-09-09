@@ -8,6 +8,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 function showDrawingScreen() {
     document.getElementById('game-screen').innerHTML = `
         <div class="game-container">
+            <div class="drawing-header">
+                <div id="timerDisplay">⏱️ 10s</div>
+                <div id="phaseDisplay">Draw something!</div>
+            </div>
             <div class="container">
                 <section class="controls-board">
                     <!-- Brush sizes -->
@@ -41,30 +45,30 @@ function showDrawingScreen() {
                     <div class="row colors">
                         <label class="title"><strong>Colors</strong></label>
                         <ul class="options">
-                            <li class="option selected" style="background-color: #000000;"></li>
-                            <li class="option" style="background-color: #FF0000;"></li>
-                            <li class="option" style="background-color: #0000FF;"></li>
+                            <li class="option" style="background-color: #3e3eff;"></li>
+                            <li class="option" style="background-color: #5e00c9;"></li>
+                            <li class="option" style="background-color: #800080;"></li>
                             <li class="option" style="background-color: #00FF00;"></li>
                             <li class="option" style="background-color: #FFA500;"></li>
-                            <li class="option" style="background-color: #800080;"></li>
+                            <li class="option" style="background-color: #FF0000;"></li>
+                            <li class="option" style="background-color: #b99b93;"></li>
                             <li class="option" style="background-color: #FFDAB9;"></li>
                             <li class="option" style="background-color: #FFFDC9;"></li>
+                            <li class="option selected" style="background-color: #000000;"></li>
+                            <li class="option" style="background-color: #c4c4c4;"></li>
                             <li class="option" style="background-color: #FFFFFF; border: 1px solid #ccc;"></li>
                             <li id="eraserOption" class="option eraser-option" title="Eraser">🧹</li>
                         </ul>
                     </div>
 
-                    <!-- Timer -->
-                    <div class="row">
-                        <div id="timerDisplay">⏱️ 10s</div>
-                    </div>
-                    <div id="phaseDisplay">Draw something!</div>
                     <button id="readyBtn" style="display:none;">✅ Finished Drawing</button>
                 </section>
 
-                <section class="drawing-board">
-                    <canvas id="drawing-canvas"></canvas>
-                </section>
+                <div class="drawing-area-wrapper">
+                    <section class="drawing-board">
+                        <canvas id="drawing-canvas"></canvas>
+                    </section>
+                </div>
 
                 <div class="trash-wrapper">
                     <button id="trashBtn" class="trash-btn">🗑️</button>
