@@ -1,7 +1,7 @@
 /* ===== Profile Page Styles ===== */
 
 #profile-container {
-    max-width: 900px;
+    max-width: 1120px;
     width: 100%;
     margin: 80px auto 40px;
     padding: 0 20px;
@@ -117,6 +117,7 @@
 .page-content {
     padding: 0px 40px 0 40px;
     max-width: 1400px;
+    margin: 0 auto; 
     box-sizing: border-box;
     width: 100%;
 }
@@ -132,11 +133,12 @@
     grid-template-columns: repeat(5, 1fr);
     gap: 20px;
     justify-content: flex-start;
+    max-width: 1080px; 
     padding: 20px 0;
 }
 
 .drawing-card {
-    flex: 0 0 calc(20% - 16px);
+    flex: 0 0 200px;
     background: #fff;
     border-radius: 8px;
     overflow: hidden;
@@ -152,11 +154,21 @@
     transform: scale(1.02);
 }
 
-.drawing-card canvas {
+.drawing-card .thumbnail-stack {
+    position: relative;
+    width: 200px;
+    height: 150px;
+    margin: 0 auto;
+}
+
+.drawing-card .thumbnail-stack .layer-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 200px;
     height: 150px;
     display: block;
-    background: #f9f9f9;
+    border-radius: 0;
 }
 
 .drawing-card p {
@@ -283,4 +295,10 @@
         width: 100%;
         height: auto;
     }
+}
+
+.main-page-content {
+    max-width: 1120px;
+    padding: 0 20px;
+    margin: 0 auto;
 }

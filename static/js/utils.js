@@ -55,7 +55,7 @@ function parseStrokes(strokesData) {
     if (!strokesData) {
         return [];
     }
-    
+
     // Handle the RawMessage structure from sqlc
     if (strokesData.RawMessage !== undefined) {
         if (Array.isArray(strokesData.RawMessage)) {
@@ -70,7 +70,7 @@ function parseStrokes(strokesData) {
             }
         }
     }
-    
+
     if (typeof strokesData === 'string') {
         try {
             const parsed = JSON.parse(strokesData);
@@ -79,77 +79,69 @@ function parseStrokes(strokesData) {
             return [];
         }
     }
-    
+
     if (Array.isArray(strokesData)) {
         return strokesData;
     }
-    
+
     return [];
 }
 
-function renderStrokes(ctx, strokesData, width, height) {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
+// Replays a single stroke onto a context.
+// - color === null  => erase (destination-out)
+// - color === hex   => paint with source-over
+// Points are stored relative (0–1) and scaled to width/height on replay.
+function _replayStroke(ctx, stroke, width, height) {
+    if (!stroke.points || stroke.points.length === 0) return;
+
+    const isErase = stroke.color === null;
+
+    ctx.globalCompositeOperation = isErase ? 'destination-out' : 'source-over';
+    if (!isErase) {
+        ctx.strokeStyle = stroke.color || '#000000';
+    }
+    ctx.lineWidth = stroke.size || 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    ctx.beginPath();
+    const first = stroke.points[0];
+    ctx.moveTo(first.x * width, first.y * height);
+    for (let i = 1; i < stroke.points.length; i++) {
+        const point = stroke.points[i];
+        ctx.lineTo(point.x * width, point.y * height);
+    }
+    ctx.stroke();
+
+    // Reset so the next caller isn't surprised.
+    ctx.globalCompositeOperation = 'source-over';
+}
+
+function renderDoodleStrokes(ctx, strokesData, width, height) {
+    ctx.clearRect(0, 0, width, height);
 
     const parsedData = parseStrokes(strokesData);
 
     if (!parsedData || parsedData.length === 0) {
-        ctx.fillStyle = '#999';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('No strokes', width/2, height/2);
         return;
     }
 
     parsedData.forEach(stroke => {
-        ctx.strokeStyle = stroke.color || '#000000';
-        ctx.lineWidth = stroke.size || 3;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        if (stroke.points && stroke.points.length > 0) {
-            ctx.beginPath();
-            const first = stroke.points[0];
-            ctx.moveTo(first.x * width, first.y * height);
-            for (let i = 1; i < stroke.points.length; i++) {
-                const point = stroke.points[i];
-                ctx.lineTo(point.x * width, point.y * height);
-            }
-            ctx.stroke();
-        }
+        _replayStroke(ctx, stroke, width, height);
     });
 }
 
-function renderStrokesOnCanvas(ctx, strokesData, width, height) {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, width, height);
+function renderDrawingStrokes(ctx, strokesData, width, height) {
+    ctx.clearRect(0, 0, width, height);
 
     const parsedData = parseStrokes(strokesData);
 
     if (!parsedData || parsedData.length === 0) {
-        ctx.fillStyle = '#999';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('No strokes', width/2, height/2);
         return;
     }
 
-    strokesData.forEach(stroke => {
-        ctx.strokeStyle = stroke.color || '#000000';
-        ctx.lineWidth = stroke.size || 3;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        if (stroke.points && stroke.points.length > 0) {
-            ctx.beginPath();
-            const first = stroke.points[0];
-            ctx.moveTo(first.x * width, first.y * height);
-            for (let i = 1; i < stroke.points.length; i++) {
-                const point = stroke.points[i];
-                ctx.lineTo(point.x * width, point.y * height);
-            }
-            ctx.stroke();
-        }
+    parsedData.forEach(stroke => {
+        _replayStroke(ctx, stroke, width, height);
     });
 }
 
@@ -166,10 +158,10 @@ function formatTimeAgo(dateValue) {
     }
 
     if (isNaN(date.getTime())) return 'Unknown date';
-    
+
     const now = new Date();
     const diffSeconds = Math.floor((now - date) / 1000);
-    
+
     if (diffSeconds > 86400) {
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
@@ -177,16 +169,16 @@ function formatTimeAgo(dateValue) {
             day: 'numeric'
         });
     }
-    
+
     if (diffSeconds < 60) {
         return `${diffSeconds} second${diffSeconds !== 1 ? 's' : ''} ago`;
     }
-    
+
     const diffMinutes = Math.floor(diffSeconds / 60);
     if (diffMinutes < 60) {
         return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
     }
-    
+
     const diffHours = Math.floor(diffMinutes / 60);
     return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
 }

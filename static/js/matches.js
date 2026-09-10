@@ -70,7 +70,7 @@ function renderMatches(data) {
         
         let strokes = item.Drawing1Finished || item.Drawing1Doodle;
         
-        renderStrokes(ctx, strokes, 200, 150);
+        renderDrawingStrokes(ctx, strokes, 200, 150);
         
         card.addEventListener('click', () => {
             window.location.href = `/match/${item.MatchID}`;

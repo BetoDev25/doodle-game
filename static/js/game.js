@@ -13,7 +13,7 @@ function showLobbyScreen() {
             <div id="queueStatus" style="margin-top: 10px;"></div>
         </div>
     `;
-    
+
     document.getElementById('findMatchBtn').addEventListener('click', startMatchmaking);
 }
 
@@ -25,13 +25,17 @@ function showQueueScreen() {
             <button id="cancelQueueBtn">Cancel</button>
         </div>
     `;
-    
+
     document.getElementById('cancelQueueBtn').addEventListener('click', cancelMatchmaking);
 }
 
 function showDrawingScreen() {
     document.getElementById('game-screen').innerHTML = `
         <div class="game-container">
+            <div class="drawing-header">
+                <div id="timerDisplay">⏱️ 10s</div>
+                <div id="phaseDisplay">Draw something!</div>
+            </div>
             <div class="container">
                 <section class="controls-board">
                     <!-- Brush sizes -->
@@ -65,30 +69,41 @@ function showDrawingScreen() {
                     <div class="row colors">
                         <label class="title"><strong>Colors</strong></label>
                         <ul class="options">
-                            <li class="option selected" style="background-color: #000000;"></li>
-                            <li class="option" style="background-color: #FF0000;"></li>
-                            <li class="option" style="background-color: #0000FF;"></li>
+                            <li class="option" style="background-color: #3e3eff;"></li>
+                            <li class="option" style="background-color: #5e00c9;"></li>
+                            <li class="option" style="background-color: #800080;"></li>
                             <li class="option" style="background-color: #00FF00;"></li>
                             <li class="option" style="background-color: #FFA500;"></li>
-                            <li class="option" style="background-color: #800080;"></li>
+                            <li class="option" style="background-color: #FF0000;"></li>
+                            <li class="option" style="background-color: #b99b93;"></li>
+                            <li class="option" style="background-color: #FFDAB9;"></li>
+                            <li class="option" style="background-color: #FFFDC9;"></li>
+                            <li class="option selected" style="background-color: #000000;"></li>
+                            <li class="option" style="background-color: #c4c4c4;"></li>
+                            <li class="option" style="background-color: #FFFFFF; border: 1px solid #ccc;"></li>
+                            <li id="eraserOption" class="option eraser-option" title="Eraser">🧹</li>
                         </ul>
                     </div>
 
-                    <!-- Timer -->
-                    <div class="row">
-                        <div id="timerDisplay">⏱️ 10s</div>
-                    </div>
-                    <div id="phaseDisplay">Draw something!</div>
                     <button id="readyBtn" style="display:none;">✅ Finished Drawing</button>
                 </section>
 
-                <section class="drawing-board">
-                    <canvas id="drawing-canvas"></canvas>
-                </section>
+                <div class="drawing-area-wrapper">
+                    <section class="drawing-board">
+                        <canvas id="background-canvas" class="layer-canvas"></canvas>
+                        <canvas id="doodle-canvas" class="layer-canvas"></canvas>
+                        <canvas id="drawing-canvas" class="layer-canvas"></canvas>
+                    </section>
+                </div>
+
+                <div class="trash-wrapper">
+                    <button id="trashBtn" class="trash-btn">🗑️</button>
+                    <button id="undoBtn" class="undo-btn">↩️</button>
+                </div>
             </div>
         </div>
     `;
-    
+
     // Initialize drawing tool
     initDrawingTool();
     connectWebSocket();
@@ -97,7 +112,7 @@ function showDrawingScreen() {
 // ===== WebSocket =====
 function connectWebSocket() {
     if (ws && ws.readyState === WebSocket.OPEN) return;
-    
+
     ws = new WebSocket(`ws://localhost:8080/ws`);
 
     ws.onopen = () => {
@@ -166,7 +181,7 @@ async function startMatchmaking() {
         connectWebSocket();
     }
     showQueueScreen();
-    
+
     if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: 'join_queue' }));
     } else {
@@ -194,15 +209,15 @@ function handleMatchFound(data) {
     role = data.role;
     gameState.matchID = matchID;
     gameState.role = role;
-    
+
     showDrawingScreen();
-    
+
     startDoodlePhase(10);
 }
 
 function handlePartnerDisconnected() {
     clearInterval(gameInterval);
-    
+
     document.getElementById('game-screen').innerHTML = `
         <div class="modal-overlay">
             <div class="modal-content">
@@ -214,12 +229,12 @@ function handlePartnerDisconnected() {
             </div>
         </div>
     `;
-    
+
     document.getElementById('rematchBtn').addEventListener('click', () => {
         showLobbyScreen();
         startMatchmaking();
     });
-    
+
     document.getElementById('homeBtn').addEventListener('click', () => {
         window.location.href = '/';
     });
@@ -231,12 +246,12 @@ function startDoodlePhase(duration) {
     gameState.timer = duration;
     updatePhase('🎨 Draw something!');
     updateTimer(duration);
-    
+
     clearInterval(gameInterval);
     gameInterval = setInterval(() => {
         gameState.timer--;
         updateTimer(gameState.timer);
-        
+
         if (gameState.timer <= 0) {
             clearInterval(gameInterval);
             submitDoodle();
@@ -260,11 +275,10 @@ function submitDoodle() {
 function handleReceiveDoodle(data) {
     opponentDoodle = data.strokes;
 
-    const canvas = document.getElementById('drawing-canvas');
-    if (canvas) {
-        const ctx = canvas.getContext("2d");
-        renderStrokes(ctx, data.strokes, canvas.width, canvas.height);
-    }
+    // Render the opponent's doodle onto the read-only doodle layer,
+    // then clear the drawing layer so the player starts phase 2 fresh.
+    renderDoodle(data.strokes);
+    clearDrawingLayer();
 
     startFinishPhase(60);
 }
@@ -313,13 +327,11 @@ readyBtn.onclick = function() {
 };
 // === End Of Ready button logic ===
 
-    strokes = opponentDoodle ? JSON.parse(JSON.stringify(opponentDoodle)) : [];
-    
     clearInterval(gameInterval);
     gameInterval = setInterval(() => {
         gameState.timer--;
         updateTimer(gameState.timer);
-        
+
         if (gameState.timer <= 0) {
             clearInterval(gameInterval);
             isReady = true;
@@ -349,43 +361,12 @@ function submitFinishedDrawing() {
     console.log('📤 finish_drawing sent');
 }
 
-
-
 // ===== Match Complete =====
 function handleMatchComplete(data) {
     console.log('Match complete data:', data);
     clearInterval(gameInterval);
     window.location.href = `/match/${data.match_id}`;
 }
-/*
-function renderResultDrawing(canvasId, strokesData) {
-    const canvas = document.getElementById(canvasId);
-    const ctx = canvas.getContext('2d');
-    
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    if (strokesData && strokesData.length > 0) {
-        strokesData.forEach(stroke => {
-            ctx.strokeStyle = stroke.color || '#000000';
-            ctx.lineWidth = stroke.size || 3;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            
-            if (stroke.points && stroke.points.length > 0) {
-                ctx.beginPath();
-                const first = stroke.points[0];
-                ctx.moveTo(first.x * canvas.width, first.y * canvas.height);
-                for (let i = 1; i < stroke.points.length; i++) {
-                    const point = stroke.points[i];
-                    ctx.lineTo(point.x * canvas.width, point.y * canvas.height);
-                }
-                ctx.stroke();
-            }
-        });
-    }
-}
-*/
 
 // ===== Initialize =====
 showLobbyScreen();

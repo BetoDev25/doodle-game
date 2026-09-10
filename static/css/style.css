@@ -11,8 +11,8 @@ body {
     min-height: 100vh;
 }
 
-.page-content {
-    max-width: 1200px;
+.page-content-matches {
+    max-width: 1160px;
     margin: 0 auto;
     padding: 80px 40px 0 40px;
     width: 100%;
@@ -164,4 +164,20 @@ body {
     border: none;
     border-radius: 6px;
     cursor: pointer;
+}
+
+.layer-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: 4px;
+}
+
+.drawing-canvas-stack {
+    position: relative;
+    width: 500px;
+    height: 400px;
 }

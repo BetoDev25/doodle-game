@@ -43,7 +43,7 @@ function renderDrawings(data, title) {
     if (!grid) {
         return;
     }
-    
+
     const items = data.matches || [];
 
     if (items.length === 0) {
@@ -52,32 +52,47 @@ function renderDrawings(data, title) {
     }
 
     let html = `<div class="drawings-grid-container">`;
-    
+
     items.forEach(item => {
         let dateStr = formatTimeAgo(item.MatchCreatedAt);
 
         html += `
             <div class="drawing-card" data-match-id="${item.MatchID}">
-                <canvas class="drawing-thumbnail" width="200" height="150"></canvas>
+                <div class="drawing-canvas-stack thumbnail-stack">
+                    <canvas class="layer-canvas thumbnail-background" width="200" height="150"></canvas>
+                    <canvas class="layer-canvas thumbnail-doodle"     width="200" height="150"></canvas>
+                    <canvas class="layer-canvas thumbnail-drawing"    width="200" height="150"></canvas>
+                </div>
                 <p class="drawing-date">${dateStr}</p>
             </div>
         `;
     });
-    
+
     html += '</div>';
 
     grid.innerHTML = html;
 
     // Render thumbnails
     document.querySelectorAll('.drawing-card').forEach((card, index) => {
-        const canvas = card.querySelector('.drawing-thumbnail');
-        const ctx = canvas.getContext('2d');
         const item = items[index];
-        
-        let strokes = item.Drawing1Finished || item.Drawing1Doodle;
-        
-        renderStrokes(ctx, strokes, 200, 150);
-        
+        const W = 200;
+        const H = 150;
+
+        const bgCtx     = card.querySelector('.thumbnail-background').getContext('2d');
+        const doodleCtx = card.querySelector('.thumbnail-doodle').getContext('2d');
+        const drawCtx   = card.querySelector('.thumbnail-drawing').getContext('2d');
+
+        // Background
+        bgCtx.globalCompositeOperation = 'source-over';
+        bgCtx.fillStyle = '#ffffff';
+        bgCtx.fillRect(0, 0, W, H);
+
+        // Doodle layer: Player 2's doodle (the one Player 1 drew on top of)
+        renderDoodleStrokes(doodleCtx, item.Drawing2Doodle, W, H);
+
+        // Drawing layer: Player 1's finished overlay
+        renderDrawingStrokes(drawCtx, item.Drawing1Finished, W, H);
+
         card.addEventListener('click', () => {
             window.location.href = `/match/${item.MatchID}`;
         });
