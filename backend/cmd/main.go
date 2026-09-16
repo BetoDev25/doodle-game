@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
+	"uuid"
 
 	_ "github.com/lib/pq"
 
@@ -91,6 +93,17 @@ func main() {
 
 	// View single match
 	mux.HandleFunc("/match/{id}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		matchID, err := uuid.Parse(r.PathValue("id"))
+		if err != nil {
+			http.Redirect(w, r, "/error?message="+url.QueryEscape("Invalid match ID"), http.StatusSeeOther)
+			return
+		}
+
+		if _, err := db.GetMatchByID(r.Context(), matchID); err != nil {
+			http.Redirect(w, r, "/error?message="+url.QueryEscape("Match does not exist or was deleted"), http.StatusSeeOther)
+			return
+		}
+
 		http.ServeFile(w, r, "./static/match.html")
 	}))
 

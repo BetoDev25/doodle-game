@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
+    await getCurrentUser();
     await loadFavorites();
 
     // Fetch the match data
@@ -26,7 +27,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // If response isn't JSON, use default message
             }
 
-            // Redirect to error page with the message
             window.location.href = `/error?message=${encodeURIComponent(errorMessage)}`;
             return;
         }
@@ -35,15 +35,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderMatchPage(data);
     } catch (error) {
         console.error('Error loading match:', error);
-        window.location.href = `/error?message=${encodeURIComponent('Error connecting to server')}`;
+        window.location.replace = `/error?message=${encodeURIComponent('Error connecting to server')}`;
     }
 });
 
 function renderMatchPage(matchData) {
     const container = document.getElementById('match-container');
 
+    const isGuest = !!(window.currentUser && window.currentUser.isGuest);
+
     // Determine if the match is favorited
-    const isFavorite = userFavorites.includes(matchData.MatchID);
+    const isFavorite = !isGuest && userFavorites.includes(matchData.MatchID);
 
     // Format the date
     let dateStr = 'Unknown date';
@@ -63,13 +65,17 @@ function renderMatchPage(matchData) {
         }
     }
 
+    const favoriteControl = isGuest
+        ? `<a class="favorite-cta" href="/signup/">Create an account to save this match!</a>`
+        : `<button class="favorite-btn" data-match-id="${matchData.MatchID}" data-is-favorite="${isFavorite}">
+               <span class="heart-icon">${isFavorite ? '❤️' : '🤍'}</span>
+               <span class="favorite-text">${isFavorite ? 'Unfavorite this match' : 'Favorite this match'}</span>
+           </button>`;
+
     container.innerHTML = `
         <div class="match-page-container">
             <h1 class="match-title">Match completed on ${dateStr}</h1>
-            <button class="favorite-btn" data-match-id="${matchData.MatchID}" data-is-favorite="${isFavorite}">
-                <span class="heart-icon">${isFavorite ? '❤️' : '🤍'}</span>
-                <span class="favorite-text">${isFavorite ? 'Match Favorited' : 'Favorite This Match'}</span>
-            </button>
+            ${favoriteControl}
             <div class="match-drawings">
                 <div class="drawing-wrapper">
                     <h3>${matchData.Player1Username || 'Deleted User'}</h3>
@@ -142,52 +148,55 @@ function renderMatchPage(matchData) {
         drawingLayer2.style.display = display;
     });
 
-    // Favorite button event
-    document.querySelector('.favorite-btn').addEventListener('click', async function() {
-        const matchId = this.dataset.matchId;
-        const isFavorite = this.dataset.isFavorite === 'true';
-        const newState = !isFavorite;
+    // Favorite button event (only exists for logged-in users)
+    const favBtn = document.querySelector('.favorite-btn');
+    if (favBtn) {
+        favBtn.addEventListener('click', async function() {
+            const matchId = this.dataset.matchId;
+            const isFavorite = this.dataset.isFavorite === 'true';
+            const newState = !isFavorite;
 
-        const heartIcon = this.querySelector('.heart-icon');
-        const favText = this.querySelector('.favorite-text');
+            const heartIcon = this.querySelector('.heart-icon');
+            const favText = this.querySelector('.favorite-text');
 
-        if (newState) {
-            heartIcon.textContent = '❤️';
-            if (favText) favText.textContent = 'Match favorited';
-            this.dataset.isFavorite = 'true';
-        } else {
-            heartIcon.textContent = '🤍';
-            if (favText) favText.textContent = 'Favorite this match';
-            this.dataset.isFavorite = 'false';
-        }
+            if (newState) {
+                heartIcon.textContent = '❤️';
+                favText.textContent = 'Unfavorite this match';
+                this.dataset.isFavorite = 'true';
+            } else {
+                heartIcon.textContent = '🤍';
+                favText.textContent = 'Favorite this match';
+                this.dataset.isFavorite = 'false';
+            }
 
-        try {
-            const response = await fetch(`/api/favorites/${newState}/${matchId}`, {
-                method: 'POST'
-            });
-            if (!response.ok) {
+            try {
+                const response = await fetch(`/api/favorites/${newState}/${matchId}`, {
+                    method: 'POST'
+                });
+                if (!response.ok) {
+                    if (newState) {
+                        heartIcon.textContent = '🤍';
+                        favText.textContent = 'Favorite this match';
+                        this.dataset.isFavorite = 'false';
+                    } else {
+                        heartIcon.textContent = '❤️';
+                        favText.textContent = 'Unfavorite this match';
+                        this.dataset.isFavorite = 'true';
+                    }
+                    alert('Failed to update favorite');
+                }
+            } catch (error) {
                 if (newState) {
                     heartIcon.textContent = '🤍';
-                    if (favText) favText.textContent = 'Favorite';
+                    favText.textContent = 'Favorite this match';
                     this.dataset.isFavorite = 'false';
                 } else {
                     heartIcon.textContent = '❤️';
-                    if (favText) favText.textContent = 'Favorited';
+                    favText.textContent = 'Unfavorite this match';
                     this.dataset.isFavorite = 'true';
                 }
-                alert('Failed to update favorite');
+                alert('Error connecting to server');
             }
-        } catch (error) {
-            if (newState) {
-                heartIcon.textContent = '🤍';
-                if (favText) favText.textContent = 'Favorite';
-                this.dataset.isFavorite = 'false';
-            } else {
-                heartIcon.textContent = '❤️';
-                if (favText) favText.textContent = 'Favorited';
-                this.dataset.isFavorite = 'true';
-            }
-            alert('Error connecting to server');
-        }
-    });
+        });
+    }
 }

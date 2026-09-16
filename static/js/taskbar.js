@@ -15,7 +15,7 @@ function renderTaskbar() {
             ${isGuest ? `
                 <div style="display:flex; align-items:center; gap:10px;">
                     <a href="/login.html" class="taskbar-btn taskbar-btn-login">Login</a>
-                    <a href="/signup.html" class="taskbar-btn taskbar-btn-signup">Sign Up</a>
+                    <a href="/signup/" class="taskbar-btn taskbar-btn-signup">Sign Up</a>
                 </div>
             ` : `
                 <div style="display:flex; align-items:center; gap:10px;">

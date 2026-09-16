@@ -32,3 +32,4 @@
 ~~3. Prevent duplicate guest usernames from being created~~
 4. 404 page
 5. Admin tools to ban users and delete matches with the press of a button.
+6. When 

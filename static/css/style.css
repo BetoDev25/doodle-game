@@ -181,3 +181,22 @@ body {
     width: 500px;
     height: 400px;
 }
+
+.favorite-cta {
+    display: inline-block;
+    font-size: 15px;
+    color: #4A90D9;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    margin: 8px 0 16px 0;
+    transition: color 0.2s;
+}
+
+.favorite-cta:hover {
+    color: #2a6fb8;
+}
+
+.favorite-cta:active {
+    color: #1d4f87;
+}

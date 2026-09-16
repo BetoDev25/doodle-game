@@ -4,31 +4,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     const username = pathParts[2]; // /profile/{username}
     const section = pathParts[3] || 'matches';
     const currentPage = parseInt(pathParts[4]) || 1;
-    
+
     if (!username) {
         window.location.href = '/error?message=' + encodeURIComponent('Invalid profile URL');
         return;
     }
-    
+
     // Fetch user info by username
     try {
         const response = await fetch(`/api/users/${username}`);
         if (!response.ok) {
             if (response.status === 404) {
-                window.location.href = `/error?message=${encodeURIComponent('User not found')}`;
+                window.location.replace = `/error?message=${encodeURIComponent('User not found')}`;
                 return;
             }
             throw new Error('Failed to fetch user');
         }
         const userData = await response.json();
-        
+
         // Set the user data for this profile
         window.profileUser = userData;
-        
+
         // Display profile info
         document.getElementById('profile-username').textContent = userData.username;
         document.title = `${userData.username}'s Profile`;
-        
+
         // Format created_at
         if (userData.created_at) {
             const date = new Date(userData.created_at);
@@ -38,13 +38,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 day: 'numeric'
             })}`;
         }
-        
+
         // Display bio
         document.getElementById('profile-bio').textContent = userData.bio || '';
-        
+
         // Render avatar
         renderAvatar(userData);
-        
+
         // Show/hide avatar edit button (only for the profile owner)
         const currentUser = window.currentUser;
         const avatarEditBtn = document.getElementById('avatar-edit-btn');
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 avatarEditBtn.style.display = 'none';
             }
         }
-        
+
         // Update mini-nav links
         document.querySelectorAll('.mini-nav-link').forEach(link => {
             link.classList.remove('active');
@@ -63,37 +63,37 @@ document.addEventListener('DOMContentLoaded', async () => {
                 link.classList.add('active');
             }
         });
-        
+
         const matchesLink = document.querySelector('.mini-nav-link-matches');
         const favoritesLink = document.querySelector('.mini-nav-link-favorites');
-        
+
         if (matchesLink) {
             matchesLink.href = `/profile/${username}/matches/${currentPage}`;
         }
         if (favoritesLink) {
             favoritesLink.href = `/profile/${username}/favorites/${currentPage}`;
         }
-        
+
         // Load matches or favorites
         let data = null;
         let title = '';
-        
+
         if (section === 'favorites') {
             data = await getRecentFavorites(username, currentPage);
             title = 'Favorite Matches';
             if (data) {
-                renderDrawings(data, title);
+                renderDrawings(data, title, window.profileUser?.id);
             }
         } else if (section === 'matches') {
             data = await getRecentMatchesByUsername(username, currentPage);
             title = 'Recent Matches';
             if (data) {
-                renderDrawings(data, title);
+                renderDrawings(data, title, window.profileUser?.id);
             }
         }
     } catch (error) {
         console.error('Error loading profile:', error);
-        window.location.href = `/error?message=${encodeURIComponent('Error loading profile')}`;
+        window.location.replace = `/error?message=${encodeURIComponent('Error loading profile')}`;
     }
 });
 
@@ -155,9 +155,9 @@ function renderAvatar(user) {
     }
 }
 
-function renderDrawings(data, title) {
+function renderDrawings(data, title, profileUserId) {
     const grid = document.getElementById('drawings-grid');
-    
+
     const items = data.matches || data.favorites || [];
     const totalPages = data.total_pages || 0;
     const currentPage = data.current_page || 1;
@@ -169,7 +169,7 @@ function renderDrawings(data, title) {
     }
 
     let html = `<h2>${title}</h2><div class="drawings-grid-container">`;
-    
+
     items.forEach(item => {
         let dateStr = 'Unknown date';
         if (item.MatchCreatedAt) {
@@ -190,12 +190,16 @@ function renderDrawings(data, title) {
 
         html += `
             <div class="drawing-card" data-match-id="${item.MatchID}">
-                <canvas class="drawing-thumbnail" width="200" height="150"></canvas>
+                <div class="drawing-canvas-stack thumbnail-stack">
+                    <canvas class="layer-canvas thumbnail-background" width="200" height="150"></canvas>
+                    <canvas class="layer-canvas thumbnail-doodle"     width="200" height="150"></canvas>
+                    <canvas class="layer-canvas thumbnail-drawing"    width="200" height="150"></canvas>
+                </div>
                 <p class="drawing-date">${dateStr}</p>
             </div>
         `;
     });
-    
+
     html += '</div>';
 
     // Pagination
@@ -217,22 +221,46 @@ function renderDrawings(data, title) {
     });
 
     // Render thumbnails
+    const W = 200;
+    const H = 150;
+
     document.querySelectorAll('.drawing-card').forEach((card, index) => {
-        const canvas = card.querySelector('.drawing-thumbnail');
-        const ctx = canvas.getContext('2d');
         const item = items[index];
-        
-        let strokes;
-        if (item.Drawing1UserID === username) {
-            strokes = item.Drawing1Finished || item.Drawing1Doodle;
-        } else if (item.Drawing2UserID === username) {
-            strokes = item.Drawing2Finished || item.Drawing2Doodle;
+
+        const bgCtx     = card.querySelector('.thumbnail-background').getContext('2d');
+        const doodleCtx = card.querySelector('.thumbnail-doodle').getContext('2d');
+        const drawCtx   = card.querySelector('.thumbnail-drawing').getContext('2d');
+
+        // Identify which side the profile owner played, then pair their
+        // finished overlay with the doodle they were given.
+        let doodleStrokes, overlayStrokes;
+
+        if (item.Drawing1UserID === profileUserId) {
+            // Profile owner is Player 1: their overlay sits on Player 2's doodle.
+            doodleStrokes  = item.Drawing2Doodle;
+            overlayStrokes = item.Drawing1Finished;
+        } else if (item.Drawing2UserID === profileUserId) {
+            // Profile owner is Player 2: their overlay sits on Player 1's doodle.
+            doodleStrokes  = item.Drawing1Doodle;
+            overlayStrokes = item.Drawing2Finished;
         } else {
-            strokes = item.Drawing1Finished || item.Drawing1Doodle;
+            // Couldn't identify the profile owner in this match — fall back
+            // to Player 1's drawing on Player 2's doodle.
+            doodleStrokes  = item.Drawing2Doodle;
+            overlayStrokes = item.Drawing1Finished;
         }
-        
-        renderDrawingStrokes(ctx, strokes, 200, 150);
-        
+
+        // Background
+        bgCtx.globalCompositeOperation = 'source-over';
+        bgCtx.fillStyle = '#ffffff';
+        bgCtx.fillRect(0, 0, W, H);
+
+        // Doodle layer
+        renderDoodleStrokes(doodleCtx, doodleStrokes, W, H);
+
+        // Drawing layer
+        renderDrawingStrokes(drawCtx, overlayStrokes, W, H);
+
         card.addEventListener('click', () => {
             window.location.href = `/match/${item.MatchID}`;
         });

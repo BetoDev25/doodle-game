@@ -28,6 +28,7 @@ func Middleware(cfg config.Config, db *database.Queries, next http.HandlerFunc) 
 			"/api/guests",
 			"/api/login",
 			"/api/users",
+			"/api/me",
 		}
 
 		if r.URL.Path == "/" {
