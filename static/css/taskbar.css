@@ -18,7 +18,7 @@
 .taskbar-left {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 50px;
 }
 
 .taskbar-logo {
@@ -35,7 +35,7 @@
 .taskbar-right {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 45px;
 }
 
 #taskbarUsername {

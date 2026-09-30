@@ -8,7 +8,7 @@ let opponentDoodle = null;
 function showLobbyScreen() {
     document.getElementById('game-screen').innerHTML = `
         <div class="lobby-container">
-            <h1>Doodle Duel</h1>
+            <h1>Sketch Switch</h1>
             <button id="findMatchBtn">Find Match</button>
             <div id="queueStatus" style="margin-top: 10px;"></div>
         </div>
@@ -20,7 +20,7 @@ function showLobbyScreen() {
 function showQueueScreen() {
     document.getElementById('game-screen').innerHTML = `
         <div class="lobby-container">
-            <h1>Doodle Duel</h1>
+            <h1>Sketch Switch</h1>
             <div id="queueStatus">⏳ Searching for opponent...</div>
             <button id="cancelQueueBtn">Cancel</button>
         </div>

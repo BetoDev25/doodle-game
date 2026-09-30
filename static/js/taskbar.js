@@ -9,9 +9,11 @@ function renderTaskbar() {
 
     document.getElementById('taskbar').innerHTML = `
         <div class="taskbar-left">
-            <a href="/" class="taskbar-logo">🎨 Doodle Duel</a>
+            <a href="/" class="taskbar-logo">Sketch Switch</a>
         </div>
         <div class="taskbar-right">
+            <a href="/play/" class="taskbar-logo">Play</a>
+            <a href="/drawing/" class="taskbar-logo">Sandbox</a>
             ${isGuest ? `
                 <div style="display:flex; align-items:center; gap:10px;">
                     <a href="/login.html" class="taskbar-btn taskbar-btn-login">Login</a>

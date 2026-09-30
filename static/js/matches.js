@@ -45,11 +45,23 @@ function renderMatches(data) {
     
     html += '</div>';
 
-    // Pagination
+        // Pagination
     html += `<div class="pagination">`;
+
+    // Prev button — only if not on page 1
+    if (currentPage > 1) {
+        html += `<button class="page-btn page-nav" data-page="${currentPage - 1}">&lt;</button>`;
+    }
+
+    // Numbered page buttons
     for (let i = 1; i <= totalPages; i++) {
         html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
     }
+
+    // Next button — always rendered, clamps to last page
+    const nextPage = Math.min(currentPage + 1, totalPages);
+    html += `<button class="page-btn page-nav" data-page="${nextPage}">&gt;</button>`;
+
     html += `</div>`;
 
     grid.innerHTML = html;

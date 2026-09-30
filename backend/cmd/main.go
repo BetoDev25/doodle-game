@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"uuid"
 
 	_ "github.com/lib/pq"
 
 	"github.com/BetoDev25/doodle-game/backend/config"
 	"github.com/BetoDev25/doodle-game/backend/server/handlers"
+	"github.com/google/uuid"
 )
 
 func main() {
@@ -63,6 +63,13 @@ func main() {
 
 	// Profile Sections
 	mux.HandleFunc("/profile/{username}/{section}/{page}", func(w http.ResponseWriter, r *http.Request) {
+		username := r.PathValue("username")
+
+		if _, err := db.GetUserByUsername(r.Context(), username); err != nil {
+			http.Redirect(w, r, "/error?message="+url.QueryEscape("User not found"), http.StatusSeeOther)
+			return
+		}
+
 		http.ServeFile(w, r, "./static/profile.html")
 	})
 
