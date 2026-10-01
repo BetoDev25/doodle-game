@@ -42,8 +42,13 @@ func RespondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func GetUserIDFromContext(r *http.Request) (uuid.UUID, bool) {
-	userID, ok := r.Context().Value("userID").(uuid.UUID)
+	userID, ok := r.Context().Value("user_id").(uuid.UUID)
 	return userID, ok
+}
+
+func GetUserRoleFromContext(r *http.Request) (string, bool) {
+	role, ok := r.Context().Value("role").(string)
+	return role, ok
 }
 
 func SetupWebSocket(db *database.Queries) *websocket.Hub {

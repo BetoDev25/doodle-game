@@ -99,7 +99,7 @@ func (q *Queries) DeleteUserByID(ctx context.Context, id uuid.UUID) error {
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, avatar_path, bio
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, avatar_path, bio, role
 FROM users
 WHERE email = $1
 `
@@ -118,12 +118,13 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.ExpiresAt,
 		&i.AvatarPath,
 		&i.Bio,
+		&i.Role,
 	)
 	return i, err
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, avatar_path, bio
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, avatar_path, bio, role
 FROM users
 WHERE id = $1
 `
@@ -142,12 +143,13 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.ExpiresAt,
 		&i.AvatarPath,
 		&i.Bio,
+		&i.Role,
 	)
 	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, avatar_path, bio
+SELECT id, username, email, password_hash, created_at, last_active_at, is_guest, expires_at, avatar_path, bio, role
 FROM users
 WHERE username = $1
 `
@@ -166,6 +168,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.ExpiresAt,
 		&i.AvatarPath,
 		&i.Bio,
+		&i.Role,
 	)
 	return i, err
 }

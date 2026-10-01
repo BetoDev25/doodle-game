@@ -57,4 +57,5 @@ type User struct {
 	ExpiresAt    sql.NullTime
 	AvatarPath   sql.NullString
 	Bio          string
+	Role         string
 }

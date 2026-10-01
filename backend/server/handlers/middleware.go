@@ -57,6 +57,7 @@ func Middleware(cfg config.Config, db *database.Queries, next http.HandlerFunc) 
 		//Add user info to context
 		ctx := context.WithValue(r.Context(), "user_id", user.ID)
 		ctx = context.WithValue(ctx, "username", user.Username)
+		ctx = context.WithValue(ctx, "role", user.Role)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
