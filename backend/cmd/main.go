@@ -172,6 +172,9 @@ func main() {
 	mux.HandleFunc("GET /api/match/{id}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetMatch(w, r, db)
 	}))
+	mux.HandleFunc("POST /api/reports", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerCreateReport(w, r, db)
+	}))
 
 	/*
 		// TEST - TEMPORARY

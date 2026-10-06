@@ -98,6 +98,7 @@ function renderMatchPage(matchData) {
                 <input type="checkbox" id="show-doodle-checkbox">
                 <label for="show-doodle-checkbox">Show Doodle</label>
             </div>
+            <button id="reportMatchBtn" class="report-match-btn">⚠️ Report Match</button>
         </div>
     `;
 
@@ -195,6 +196,38 @@ function renderMatchPage(matchData) {
                     favText.textContent = 'Unfavorite this match';
                     this.dataset.isFavorite = 'true';
                 }
+                alert('Error connecting to server');
+            }
+        });
+    }
+
+        // Report button
+    const reportBtn = document.getElementById('reportMatchBtn');
+    if (reportBtn) {
+        reportBtn.addEventListener('click', async function() {
+            const confirmed = confirm('Are you sure you want to report this match?');
+            if (!confirmed) return;
+
+            try {
+                const response = await fetch('/api/reports', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        match_id: matchData.MatchID,
+                        url: window.location.pathname
+                    })
+                });
+
+                if (!response.ok) {
+                    alert('Failed to submit report');
+                    return;
+                }
+
+                alert('Report submitted. Thank you.');
+                reportBtn.disabled = true;
+                reportBtn.textContent = '⚠️ Reported';
+            } catch (error) {
+                console.error('Error submitting report:', error);
                 alert('Error connecting to server');
             }
         });

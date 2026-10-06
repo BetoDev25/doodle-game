@@ -39,6 +39,14 @@ type Match struct {
 	Drawing2ID     uuid.NullUUID
 }
 
+type Report struct {
+	ID         uuid.UUID
+	ReporterID uuid.UUID
+	MatchID    uuid.UUID
+	Url        string
+	ReportedAt time.Time
+}
+
 type Session struct {
 	Token     string
 	CreatedAt time.Time
