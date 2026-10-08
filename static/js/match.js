@@ -83,6 +83,7 @@ function renderMatchPage(matchData) {
                             ? `<a href="/profile/${matchData.Player1Username}">${matchData.Player1Username}</a>`
                             : 'Deleted User'}
                     </h3>
+                    <img class="match-avatar" id="avatar1" width="80" height="80" alt="Player 1 avatar">
                     <div class="drawing-canvas-stack" id="stack1">
                         <canvas class="layer-canvas archive-background" id="drawing1-background" width="500" height="400"></canvas>
                         <canvas class="layer-canvas archive-doodle"     id="drawing1-doodle"     width="500" height="400"></canvas>
@@ -95,6 +96,7 @@ function renderMatchPage(matchData) {
                             ? `<a href="/profile/${matchData.Player2Username}">${matchData.Player2Username}</a>`
                             : 'Deleted User'}
                     </h3>
+                    <img class="match-avatar" id="avatar2" width="80" height="80" alt="Player 2 avatar">
                     <div class="drawing-canvas-stack" id="stack2">
                         <canvas class="layer-canvas archive-background" id="drawing2-background" width="500" height="400"></canvas>
                         <canvas class="layer-canvas archive-doodle"     id="drawing2-doodle"     width="500" height="400"></canvas>
@@ -112,6 +114,12 @@ function renderMatchPage(matchData) {
 
     const W = 500;
     const H = 400;
+
+    const avatar1 = document.getElementById('avatar1');
+    avatar1.src = (matchData.Player1AvatarPath || '/avatars/default.png') + '?t=' + Date.now();
+
+    const avatar2 = document.getElementById('avatar2');
+    avatar2.src = (matchData.Player2AvatarPath || '/avatars/default.png') + '?t=' + Date.now();
 
     // Canvas 1 shows: Player 2's doodle underneath, Player 1's finished overlay on top.
     // Canvas 2 shows: Player 1's doodle underneath, Player 2's finished overlay on top.

@@ -75,3 +75,18 @@
     color: #888;
     line-height: 1.4;
 }
+
+#match-checkbox {
+    display: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    border: 2px solid #4A90D9;
+    border-radius: 8px;
+    cursor: pointer;
+    background: white;
+    color: #4A90D9;
+    transition: all 0.2s;
+    width: 100%;
+    margin-top: 10px;
+}

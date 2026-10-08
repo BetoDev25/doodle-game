@@ -222,15 +222,12 @@
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 32px;
+    font-size: 24px;
     padding: 10px;
     transition: transform 0.2s;
     margin-bottom: 20px;
 }
 
-.favorite-btn:hover {
-    transform: scale(1.1);
-}
 
 .match-drawings {
     display: flex;

@@ -69,7 +69,9 @@ SELECT
     d2.doodle_strokes AS drawing2_doodle,
     d2.finished_strokes AS drawing2_finished,
     COALESCE(u1.username, 'Deleted User') AS player1_username,
-    COALESCE(u2.username, 'Deleted User') AS player2_username
+    COALESCE(u2.username, 'Deleted User') AS player2_username,
+    COALESCE(u1.avatar_path, '') AS player1_avatar_path,
+    COALESCE(u2.avatar_path, '') AS player2_avatar_path
 FROM matches m
 INNER JOIN drawings d1 ON d1.id = m.drawing1_id
 INNER JOIN drawings d2 ON d2.id = m.drawing2_id
@@ -79,22 +81,24 @@ WHERE m.id = $1
 `
 
 type GetMatchByIDRow struct {
-	MatchID          uuid.UUID
-	MatchCreatedAt   time.Time
-	FinishedAt       sql.NullTime
-	FavoritesCount   sql.NullInt32
-	Player1ID        uuid.NullUUID
-	Player2ID        uuid.NullUUID
-	Drawing1ID       uuid.UUID
-	Drawing1UserID   uuid.NullUUID
-	Drawing1Doodle   json.RawMessage
-	Drawing1Finished json.RawMessage
-	Drawing2ID       uuid.UUID
-	Drawing2UserID   uuid.NullUUID
-	Drawing2Doodle   json.RawMessage
-	Drawing2Finished json.RawMessage
-	Player1Username  string
-	Player2Username  string
+	MatchID           uuid.UUID
+	MatchCreatedAt    time.Time
+	FinishedAt        sql.NullTime
+	FavoritesCount    sql.NullInt32
+	Player1ID         uuid.NullUUID
+	Player2ID         uuid.NullUUID
+	Drawing1ID        uuid.UUID
+	Drawing1UserID    uuid.NullUUID
+	Drawing1Doodle    json.RawMessage
+	Drawing1Finished  json.RawMessage
+	Drawing2ID        uuid.UUID
+	Drawing2UserID    uuid.NullUUID
+	Drawing2Doodle    json.RawMessage
+	Drawing2Finished  json.RawMessage
+	Player1Username   string
+	Player2Username   string
+	Player1AvatarPath string
+	Player2AvatarPath string
 }
 
 func (q *Queries) GetMatchByID(ctx context.Context, id uuid.UUID) (GetMatchByIDRow, error) {
@@ -117,6 +121,8 @@ func (q *Queries) GetMatchByID(ctx context.Context, id uuid.UUID) (GetMatchByIDR
 		&i.Drawing2Finished,
 		&i.Player1Username,
 		&i.Player2Username,
+		&i.Player1AvatarPath,
+		&i.Player2AvatarPath,
 	)
 	return i, err
 }

@@ -38,7 +38,9 @@ SELECT
     d2.doodle_strokes AS drawing2_doodle,
     d2.finished_strokes AS drawing2_finished,
     COALESCE(u1.username, 'Deleted User') AS player1_username,
-    COALESCE(u2.username, 'Deleted User') AS player2_username
+    COALESCE(u2.username, 'Deleted User') AS player2_username,
+    COALESCE(u1.avatar_path, '') AS player1_avatar_path,
+    COALESCE(u2.avatar_path, '') AS player2_avatar_path
 FROM matches m
 INNER JOIN drawings d1 ON d1.id = m.drawing1_id
 INNER JOIN drawings d2 ON d2.id = m.drawing2_id
