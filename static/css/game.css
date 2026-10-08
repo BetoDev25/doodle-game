@@ -1,11 +1,77 @@
-#game-container {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    max-width: 1200px;
-    padding: 40px;
-    box-sizing: border-box;
+
+.game-container h1 {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+.game-container p {
+    padding-top: 50px;
+    font-size: 18px;
+    color: #555;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+#findMatchBtn {
+    padding: 12px 32px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    background: #4A90D9;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+#findMatchBtn:hover {
+    background: #357ab8;
+}
+
+#findMatchBtn:active {
+    transform: scale(0.97);
+}
+
+.lobby-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 60px;
     text-align: center;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);  
+}
+.lobby-container h1 {
+    padding-bottom: 16px;
+}
+.game-container p {
+    padding-top: 50px;
+    font-size: 18px;
+    color: #555;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+#queueStatus {
+    font-size: 18px;
+    color: #555;
+    margin-bottom: 8px;
+    line-height: 1.6;
+}  
+
+#cancelQueueBtn {
+    padding: 12px 32px;
+    font-size: 18px;
+    font-weight: bold;
+    color: black;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.sfw-notice {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #888;
+    line-height: 1.4;
 }

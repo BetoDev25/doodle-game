@@ -11,6 +11,7 @@ function showLobbyScreen() {
             <h1>Sketch Switch</h1>
             <button id="findMatchBtn">Find Match</button>
             <div id="queueStatus" style="margin-top: 10px;"></div>
+            <p class="sfw-notice">Your drawings must be Safe For Work (no nudity) and not promote bigotry or hate of any kind.</p>
         </div>
     `;
 
@@ -21,8 +22,9 @@ function showQueueScreen() {
     document.getElementById('game-screen').innerHTML = `
         <div class="lobby-container">
             <h1>Sketch Switch</h1>
-            <div id="queueStatus">⏳ Searching for opponent...</div>
+            <div id="queueStatus">⏳ Searching for partner...</div>
             <button id="cancelQueueBtn">Cancel</button>
+            <p class="sfw-notice">Your drawings must be Safe For Work (no nudity) and not promote bigotry or hate of any kind.</p>
         </div>
     `;
 

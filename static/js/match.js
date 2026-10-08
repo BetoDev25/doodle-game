@@ -78,7 +78,11 @@ function renderMatchPage(matchData) {
             ${favoriteControl}
             <div class="match-drawings">
                 <div class="drawing-wrapper">
-                    <h3>${matchData.Player1Username || 'Deleted User'}</h3>
+                    <h3>
+                        ${matchData.Player1Username
+                            ? `<a href="/profile/${matchData.Player1Username}">${matchData.Player1Username}</a>`
+                            : 'Deleted User'}
+                    </h3>
                     <div class="drawing-canvas-stack" id="stack1">
                         <canvas class="layer-canvas archive-background" id="drawing1-background" width="500" height="400"></canvas>
                         <canvas class="layer-canvas archive-doodle"     id="drawing1-doodle"     width="500" height="400"></canvas>
@@ -86,7 +90,11 @@ function renderMatchPage(matchData) {
                     </div>
                 </div>
                 <div class="drawing-wrapper">
-                    <h3>${matchData.Player2Username || 'Deleted User'}</h3>
+                    <h3>
+                        ${matchData.Player2Username
+                            ? `<a href="/profile/${matchData.Player2Username}">${matchData.Player2Username}</a>`
+                            : 'Deleted User'}
+                    </h3>
                     <div class="drawing-canvas-stack" id="stack2">
                         <canvas class="layer-canvas archive-background" id="drawing2-background" width="500" height="400"></canvas>
                         <canvas class="layer-canvas archive-doodle"     id="drawing2-doodle"     width="500" height="400"></canvas>

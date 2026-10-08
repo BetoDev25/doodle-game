@@ -8,20 +8,8 @@
     align-items: stretch;
 }
 
-#game-container {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    max-width: 1000px;
-    padding: 40px; /* top right bottom left */
-    box-sizing: border-box;
-    text-align: center;
-}
-
 .drawing-area-wrapper {
-    flex: 1;
+    flex: 1 1 400px;
     max-width: 600px;
     display: flex;
 }
@@ -36,6 +24,9 @@
     position: relative;
     height: 500px;
     min-height: 500px;
+}
+.drawing-header {
+    text-align: center;
 }
 
 .layer-canvas {
@@ -277,4 +268,17 @@
 .background-color-btn:hover {
     transform: scale(1.1);
     border-color: #333;
+}
+
+
+#game-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    max-width: 1000px;
+    padding: 40px; /* top right bottom left */
+    box-sizing: border-box;
+    text-align: center;
 }

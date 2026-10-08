@@ -223,3 +223,18 @@ body {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+#devlog-header {
+    font-size: 18px;
+    margin-bottom: 30px;
+    line-height: 1.6;  
+}
+
+#devlog-post {
+    font-size: 18px;
+    margin-bottom: 30px;
+    line-height: 1.6;  
+}
+#devlog-post p {
+    color: #555;
+}

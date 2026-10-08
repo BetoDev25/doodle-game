@@ -14,6 +14,7 @@ function renderTaskbar() {
         <div class="taskbar-right">
             <a href="/play/" class="taskbar-logo">Play</a>
             <a href="/drawing/" class="taskbar-logo">Sandbox</a>
+            <a href="/devlog/" class="taskbar-logo">Devlog</a>
             ${isGuest ? `
                 <div style="display:flex; align-items:center; gap:10px;">
                     <a href="/login.html" class="taskbar-btn taskbar-btn-login">Login</a>

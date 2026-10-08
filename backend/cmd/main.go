@@ -56,6 +56,11 @@ func main() {
 		http.ServeFile(w, r, "./static/game.html")
 	}))
 
+	// Devlog page
+	mux.HandleFunc("/devlog/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/devlog.html")
+	}))
+
 	// DRAWING TEST PAGE - DELETE LATER
 	mux.HandleFunc("/drawing/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/drawing-test.html")
