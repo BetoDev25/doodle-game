@@ -1,0 +1,39 @@
+name: Deploy
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: "go.mod"
+
+      - name: Build Linux binary
+        run: GOOS=linux GOARCH=amd64 go build -o sketchswitch ./backend/cmd
+
+      - name: Upload binary to Lightsail
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ubuntu
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          source: "sketchswitch"
+          target: "/tmp/"
+
+      - name: Restart service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ubuntu
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          script: |
+            sudo mv /tmp/sketchswitch /usr/local/bin/sketchswitch
+            sudo chmod +x /usr/local/bin/sketchswitch
+            sudo systemctl restart sketchswitch
