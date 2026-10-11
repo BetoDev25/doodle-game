@@ -47,3 +47,14 @@ jobs:
           key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
           script_stop: true
           script: sudo /usr/local/bin/sketchswitch-deploy
+
+      - name: Run migrations
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.LIGHTSAIL_HOST }}
+          username: ${{ secrets.LIGHTSAIL_USER }}
+          key: ${{ secrets.LIGHTSAIL_SSH_KEY }}
+          script_stop: true
+          script: |
+            cd /opt/sketchswitch-migrations/backend/sql/schema
+            goose -dir . postgres "postgres://doodle_admin:${{ secrets.DB_PASSWORD }}@localhost:5432/sketch_switch" up

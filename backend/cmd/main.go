@@ -30,6 +30,7 @@ func main() {
 
 	// Serve static files from the "static" directory
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	mux.Handle("/avatars/", http.StripPrefix("/avatars/", http.FileServer(http.Dir(cfg.AvatarDir))))
 
 	// TEST - TEMPORARY
 	mux.HandleFunc("/view-drawings", func(w http.ResponseWriter, r *http.Request) {
