@@ -19,7 +19,7 @@ type APIConfig struct {
 func SetupAPIConfig(env string) *APIConfig {
 	var envFile string
 	if env == "production" {
-		envFile = ".env.prod"
+		envFile = "/etc/sketchswitch/.env.prod"
 	} else {
 		envFile = ".env.dev"
 	}
