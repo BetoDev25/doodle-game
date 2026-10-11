@@ -150,17 +150,19 @@ function formatTimeAgo(dateValue) {
 
     let date;
     if (dateValue.Time !== undefined) {
-        const timeStr = dateValue.Time.replace('Z', '');
-        date = new Date(timeStr);
+        date = new Date(dateValue.Time);
     } else {
-        const timeStr = String(dateValue).replace('Z', '');
-        date = new Date(timeStr);
+        date = new Date(dateValue);
     }
 
     if (isNaN(date.getTime())) return 'Unknown date';
 
     const now = new Date();
     const diffSeconds = Math.floor((now - date) / 1000);
+
+    if (diffSeconds < 0) {
+        return 'just now';
+    }
 
     if (diffSeconds > 86400) {
         return date.toLocaleDateString('en-US', {
