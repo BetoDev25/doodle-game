@@ -35,8 +35,8 @@ FROM favorites f
 JOIN matches m ON m.id = f.match_id
 JOIN drawings d1 ON d1.id = m.drawing1_id
 JOIN drawings d2 ON d2.id = m.drawing2_id
-JOIN users u1 ON u1.id = d1.user_id
-JOIN users u2 ON u2.id = d2.user_id
+LEFT JOIN users u1 ON u1.id = d1.user_id
+LEFT JOIN users u2 ON u2.id = d2.user_id
 WHERE f.user_id = (SELECT id FROM users WHERE users.username = $1)
 ORDER BY f.created_at DESC
 LIMIT $2 OFFSET $3;
