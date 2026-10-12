@@ -33,8 +33,8 @@ SELECT
     d2.finished_strokes AS drawing2_finished
 FROM favorites f
 JOIN matches m ON m.id = f.match_id
-JOIN drawings d1 ON d1.match_id = m.id
-JOIN drawings d2 ON d2.match_id = m.id AND d2.user_id > d1.user_id
+JOIN drawings d1 ON d1.id = m.drawing1_id
+JOIN drawings d2 ON d2.id = m.drawing2_id
 JOIN users u1 ON u1.id = d1.user_id
 JOIN users u2 ON u2.id = d2.user_id
 WHERE f.user_id = (SELECT id FROM users WHERE users.username = $1)
@@ -42,10 +42,7 @@ ORDER BY f.created_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: GetTotalFavoritesByUsername :one
-SELECT COUNT(DISTINCT f.match_id)
+SELECT COUNT(*)
 FROM favorites f
-JOIN matches m ON m.id = f.match_id
-JOIN drawings d1 ON d1.match_id = m.id
-JOIN drawings d2 ON d2.match_id = m.id AND d2.user_id != d1.user_id
 JOIN users u ON u.id = f.user_id
 WHERE u.username = $1;
