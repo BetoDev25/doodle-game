@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    // Show 'play again' pop-up
+    if (sessionStorage.getItem('justFinishedMatch') === 'true') {
+        sessionStorage.setItem('justFinishedMatch', 'false');
+        showToast('Match complete! <a href="/play">Play again?</a>');
+    }
+
     // Get match ID from URL
     const pathParts = window.location.pathname.split('/');
     const matchId = pathParts[2]; // /match/{id}

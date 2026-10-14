@@ -238,3 +238,48 @@ body {
 #devlog-post p {
     color: #555;
 }
+
+#toastNotification {
+    position: absolute;
+    bottom: 0;
+    right: 20px;
+}
+
+.toast {
+    background: #fff;
+    padding: 20px;
+    padding-right: 40px;
+    margin-bottom: 20px;
+    align-items: center;
+    min-width: 400px;
+    font-size: 28px;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toast-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 22px;
+    line-height: 1;
+    color: #999;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toast i {
+    font-size: 28px;
+    color: #be0707;
+    margin-right: 20px;
+}
+
+.toast:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #086108;
+}

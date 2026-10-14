@@ -367,8 +367,8 @@ function submitFinishedDrawing() {
 
 // ===== Match Complete =====
 function handleMatchComplete(data) {
-    console.log('Match complete data:', data);
     clearInterval(gameInterval);
+    sessionStorage.setItem('justFinishedMatch', 'true');
     window.location.href = `/match/${data.match_id}`;
 }
 

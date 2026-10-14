@@ -184,3 +184,19 @@ function formatTimeAgo(dateValue) {
     const diffHours = Math.floor(diffMinutes / 60);
     return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
 }
+
+// Toast
+function showToast(message) {
+    let toast = document.createElement('div');
+    toast.classList.add('toast');
+    toast.innerHTML = `
+        ${message}
+        <span class="toast-close">&times;</span>
+    `;
+
+    toast.querySelector('.toast-close').addEventListener('click', () => {
+        toast.remove();
+    });
+
+    toastNotification.appendChild(toast);
+}
