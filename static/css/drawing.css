@@ -100,6 +100,30 @@
     transform: none;
 }
 
+.save-btn {
+    font-size: 28px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 8px;
+    transition: background-color 0.2s, transform 0.2s;
+    line-height: 1;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.save-btn:hover {
+    background-color: rgba(0, 150, 0, 0.1);
+}
+
+.save-btn:active {
+    transform: scale(0.9);
+}
+
 /* Controls Panel */
 .controls-board {
     width: 200px;

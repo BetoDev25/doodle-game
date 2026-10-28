@@ -77,6 +77,7 @@ function showDrawingScreen() {
                 <div class="trash-wrapper">
                     <button id="trashBtn" class="trash-btn">🗑️</button>
                     <button id="undoBtn" class="undo-btn">↩️</button>
+                    <button id="saveBtn" class="save-btn">💾</button>
                 </div>
             </div>
         </div>
@@ -162,6 +163,41 @@ function showDrawingScreen() {
 
         wasDrawing = isDrawing;
     }, 100);
+
+    // ===== SAVE AS PNG (flattened) =====
+    document.getElementById('saveBtn').addEventListener('click', saveAsPng);
+
+    function saveAsPng() {
+        const bg = document.getElementById('background-canvas');
+        const doodle = document.getElementById('doodle-canvas');
+        const draw = document.getElementById('drawing-canvas');
+        if (!bg || !doodle || !draw) return;
+
+        // Offscreen canvas at the drawing layer's pixel dimensions
+        const out = document.createElement('canvas');
+        out.width = draw.width;
+        out.height = draw.height;
+        const octx = out.getContext('2d');
+
+        // Composite layers bottom → top
+        octx.drawImage(bg, 0, 0);
+        octx.drawImage(doodle, 0, 0);
+        octx.drawImage(draw, 0, 0);
+
+        // Export and download
+        out.toBlob((blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            a.href = url;
+            a.download = `drawing-${ts}.png`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }, 'image/png');
+    }
 
     // Trash button
     document.getElementById('trashBtn').addEventListener('click', function() {
