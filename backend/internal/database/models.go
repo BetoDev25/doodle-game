@@ -14,11 +14,13 @@ import (
 
 type Drawing struct {
 	ID              uuid.UUID
-	MatchID         uuid.UUID
+	MatchID         uuid.NullUUID
 	UserID          uuid.NullUUID
 	DoodleStrokes   json.RawMessage
 	FinishedStrokes json.RawMessage
 	CreatedAt       time.Time
+	User2ID         uuid.NullUUID
+	Isoffline       bool
 }
 
 type Favorite struct {

@@ -21,3 +21,61 @@ FROM drawings
 WHERE user_id = $1
 ORDER BY created_at DESC
 LIMIT 20 OFFSET $2;
+
+
+-- name: UpdateOfflineDrawingUser :exec
+UPDATE drawings
+SET user2_id = $1,
+    finished_strokes = $2
+WHERE id = $3;
+
+-- name: GetOfflineDrawingByID :one
+SELECT 
+    d.id AS drawing_id,
+    d.user_id AS drawing_user1_id,
+    d.user2_id AS drawing_user2_id,
+    d.doodle_strokes AS drawing_doodle,
+    d.finished_strokes AS drawing_finished,
+    d.created_at AS drawing_created_at,
+    COALESCE(u1.username, 'Deleted User') AS user1_username,
+    u1.is_guest AS user1_is_guest,
+    COALESCE(u1.avatar_path, '') AS user1_avatar_path,
+    COALESCE(u2.username, 'Deleted User') AS user2_username,
+    u2.is_guest AS user2_is_guest,
+    COALESCE(u2.avatar_path, '') AS user2_avatar_path
+FROM drawings d
+LEFT JOIN users u1 ON u1.id = d.user_id
+LEFT JOIN users u2 ON u2.id = d.user2_id
+WHERE d.id = $1 AND d.isOffline = true;
+
+-- name: GetMostRecentOfflineDrawings :many
+SELECT 
+    d.id AS drawing_id,
+    d.doodle_strokes AS drawing_doodle,
+    d.finished_strokes AS drawing_finished,
+    d.created_at AS drawing_created_at
+FROM drawings d
+WHERE d.isOffline = true
+ORDER BY d.created_at DESC
+LIMIT $1 OFFSET $2;
+
+-- name: GetMostRecentOfflineDrawingsByUserID :many
+SELECT 
+    d.id AS drawing_id,
+    d.doodle_strokes AS drawing_doodle,
+    d.finished_strokes AS drawing_finished,
+    d.created_at AS drawing_created_at
+FROM drawings d
+WHERE d.isOffline = true
+  AND d.user2_id = $1
+ORDER BY d.created_at DESC, d.id DESC
+LIMIT $2 OFFSET $3;
+
+-- name: GetTotalOfflineDrawings :one
+SELECT COUNT(*)
+FROM drawings;
+
+-- name: GetTotalOfflineDrawingsByUserID :one
+SELECT COUNT(*)
+FROM drawings
+WHERE user2_id = $1;
