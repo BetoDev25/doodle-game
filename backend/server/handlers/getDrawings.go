@@ -61,7 +61,7 @@ func HandlerGetDrawings(w http.ResponseWriter, r *http.Request, db *database.Que
 		}
 
 		response = append(response, DrawingResponse{
-			MatchID:         d.MatchID,
+			MatchID:         d.MatchID.UUID,
 			FinishedStrokes: strokes,
 			CreatedAt:       d.CreatedAt,
 		})

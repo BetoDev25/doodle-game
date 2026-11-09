@@ -23,11 +23,27 @@ ORDER BY created_at DESC
 LIMIT 20 OFFSET $2;
 
 
+
 -- name: UpdateOfflineDrawingUser :exec
 UPDATE drawings
 SET user2_id = $1,
     finished_strokes = $2
 WHERE id = $3;
+
+-- name: GetRandomUnfinishedOfflineDrawing :one
+SELECT 
+    d.id AS drawing_id,
+    d.doodle_strokes AS drawing_doodle,
+    d.created_at AS drawing_created_at,
+    COALESCE(u.username, 'Deleted User') AS username,
+    COALESCE(u.avatar_path, '') AS user_avatar_path
+FROM drawings d
+LEFT JOIN users u ON u.id = d.user_id
+WHERE d.isOffline = true
+  AND d.finished_strokes = '[]'::jsonb
+  AND d.user2_id IS NULL
+ORDER BY random()
+LIMIT 1;
 
 -- name: GetOfflineDrawingByID :one
 SELECT 
@@ -48,7 +64,7 @@ LEFT JOIN users u1 ON u1.id = d.user_id
 LEFT JOIN users u2 ON u2.id = d.user2_id
 WHERE d.id = $1 AND d.isOffline = true;
 
--- name: GetMostRecentOfflineDrawings :many
+-- name: GetRecentOfflineDrawings :many
 SELECT 
     d.id AS drawing_id,
     d.doodle_strokes AS drawing_doodle,
@@ -59,7 +75,7 @@ WHERE d.isOffline = true
 ORDER BY d.created_at DESC
 LIMIT $1 OFFSET $2;
 
--- name: GetMostRecentOfflineDrawingsByUserID :many
+-- name: GetRecentOfflineDrawingsByUserID :many
 SELECT 
     d.id AS drawing_id,
     d.doodle_strokes AS drawing_doodle,
@@ -73,9 +89,11 @@ LIMIT $2 OFFSET $3;
 
 -- name: GetTotalOfflineDrawings :one
 SELECT COUNT(*)
-FROM drawings;
+FROM drawings
+WHERE isOffline = true;
 
 -- name: GetTotalOfflineDrawingsByUserID :one
 SELECT COUNT(*)
 FROM drawings
-WHERE user2_id = $1;
+WHERE user2_id = $1
+    AND isOffline = true;

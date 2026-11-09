@@ -104,6 +104,16 @@ func main() {
 		handlers.HandlerGetRecentMatches(w, r, db)
 	}))
 
+	// View Offline Drawings by Username
+	mux.HandleFunc("GET /api/offlineDrawings/{username}/drawings/{page}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetRecentOfflineDrawingsUsername(w, r, db)
+	}))
+
+	// View Offline Drawings
+	mux.HandleFunc("GET /api/offlineDrawings/{page}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetRecentOfflineDrawings(w, r, db)
+	}))
+
 	// View single match
 	mux.HandleFunc("/match/{id}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		matchID, err := uuid.Parse(r.PathValue("id"))
@@ -156,6 +166,18 @@ func main() {
 	}))
 	mux.HandleFunc("GET /api/drawings", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetDrawings(w, r, db)
+	}))
+	mux.HandleFunc("POST /api/drawings", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerCreateDrawings(w, r, db)
+	}))
+	mux.HandleFunc("GET /api/offlineDrawing", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetRandomDrawing(w, r, db)
+	}))
+	mux.HandleFunc("GET /api/offlineDrawing/{id}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetRandomDrawingByID(w, r, db)
+	}))
+	mux.HandleFunc("PATCH /api/offlineDrawing/{id}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerUpdateOfflineDrawing(w, r, db)
 	}))
 	mux.HandleFunc("POST /api/guests", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerCreateGuest(w, r, db, cfg)

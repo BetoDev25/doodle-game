@@ -259,7 +259,10 @@ func (h *Hub) deleteIncompleteMatch(matchID string) {
 		return
 	}
 
-	err = h.DB.DeleteDrawingByMatchID(context.Background(), matchUUID)
+	err = h.DB.DeleteDrawingByMatchID(context.Background(), uuid.NullUUID{
+		UUID:  matchUUID,
+		Valid: true,
+	})
 	if err != nil {
 		log.Printf("Error deleting incomplete drawing: %v", err)
 	}
@@ -299,7 +302,10 @@ func (h *Hub) handleDoodleComplete(client *Client, data []byte) {
 		for userID, strokes := range state.DoodleStrokes {
 			userUUID, _ := uuid.Parse(userID)
 			drawing, err := h.DB.CreateDrawing(context.Background(), database.CreateDrawingParams{
-				MatchID: matchID,
+				MatchID: uuid.NullUUID{
+					UUID:  matchID,
+					Valid: true,
+				},
 				UserID: uuid.NullUUID{
 					UUID:  userUUID,
 					Valid: true,
@@ -383,7 +389,10 @@ func (h *Hub) handleFinishDrawing(client *Client, data []byte) {
 		for userID, strokes := range state.FinishStrokes {
 			userUUID, _ := uuid.Parse(userID)
 			err := h.DB.UpdateDrawingFinished(context.Background(), database.UpdateDrawingFinishedParams{
-				MatchID: matchID,
+				MatchID: uuid.NullUUID{
+					UUID:  matchID,
+					Valid: true,
+				},
 				UserID: uuid.NullUUID{
 					UUID:  userUUID,
 					Valid: true,

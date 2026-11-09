@@ -136,112 +136,6 @@ func (q *Queries) GetDrawingsByUserID(ctx context.Context, arg GetDrawingsByUser
 	return items, nil
 }
 
-const getMostRecentOfflineDrawings = `-- name: GetMostRecentOfflineDrawings :many
-SELECT 
-    d.id AS drawing_id,
-    d.doodle_strokes AS drawing_doodle,
-    d.finished_strokes AS drawing_finished,
-    d.created_at AS drawing_created_at
-FROM drawings d
-WHERE d.isOffline = true
-ORDER BY d.created_at DESC
-LIMIT $1 OFFSET $2
-`
-
-type GetMostRecentOfflineDrawingsParams struct {
-	Limit  int32
-	Offset int32
-}
-
-type GetMostRecentOfflineDrawingsRow struct {
-	DrawingID        uuid.UUID
-	DrawingDoodle    json.RawMessage
-	DrawingFinished  json.RawMessage
-	DrawingCreatedAt time.Time
-}
-
-func (q *Queries) GetMostRecentOfflineDrawings(ctx context.Context, arg GetMostRecentOfflineDrawingsParams) ([]GetMostRecentOfflineDrawingsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getMostRecentOfflineDrawings, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetMostRecentOfflineDrawingsRow
-	for rows.Next() {
-		var i GetMostRecentOfflineDrawingsRow
-		if err := rows.Scan(
-			&i.DrawingID,
-			&i.DrawingDoodle,
-			&i.DrawingFinished,
-			&i.DrawingCreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getMostRecentOfflineDrawingsByUserID = `-- name: GetMostRecentOfflineDrawingsByUserID :many
-SELECT 
-    d.id AS drawing_id,
-    d.doodle_strokes AS drawing_doodle,
-    d.finished_strokes AS drawing_finished,
-    d.created_at AS drawing_created_at
-FROM drawings d
-WHERE d.isOffline = true
-  AND d.user2_id = $1
-ORDER BY d.created_at DESC, d.id DESC
-LIMIT $2 OFFSET $3
-`
-
-type GetMostRecentOfflineDrawingsByUserIDParams struct {
-	User2ID uuid.NullUUID
-	Limit   int32
-	Offset  int32
-}
-
-type GetMostRecentOfflineDrawingsByUserIDRow struct {
-	DrawingID        uuid.UUID
-	DrawingDoodle    json.RawMessage
-	DrawingFinished  json.RawMessage
-	DrawingCreatedAt time.Time
-}
-
-func (q *Queries) GetMostRecentOfflineDrawingsByUserID(ctx context.Context, arg GetMostRecentOfflineDrawingsByUserIDParams) ([]GetMostRecentOfflineDrawingsByUserIDRow, error) {
-	rows, err := q.db.QueryContext(ctx, getMostRecentOfflineDrawingsByUserID, arg.User2ID, arg.Limit, arg.Offset)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetMostRecentOfflineDrawingsByUserIDRow
-	for rows.Next() {
-		var i GetMostRecentOfflineDrawingsByUserIDRow
-		if err := rows.Scan(
-			&i.DrawingID,
-			&i.DrawingDoodle,
-			&i.DrawingFinished,
-			&i.DrawingCreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getOfflineDrawingByID = `-- name: GetOfflineDrawingByID :one
 SELECT 
     d.id AS drawing_id,
@@ -297,9 +191,153 @@ func (q *Queries) GetOfflineDrawingByID(ctx context.Context, id uuid.UUID) (GetO
 	return i, err
 }
 
+const getRandomUnfinishedOfflineDrawing = `-- name: GetRandomUnfinishedOfflineDrawing :one
+SELECT 
+    d.id AS drawing_id,
+    d.doodle_strokes AS drawing_doodle,
+    d.created_at AS drawing_created_at,
+    COALESCE(u.username, 'Deleted User') AS username,
+    COALESCE(u.avatar_path, '') AS user_avatar_path
+FROM drawings d
+LEFT JOIN users u ON u.id = d.user_id
+WHERE d.isOffline = true
+  AND d.finished_strokes = '[]'::jsonb
+  AND d.user2_id IS NULL
+ORDER BY random()
+LIMIT 1
+`
+
+type GetRandomUnfinishedOfflineDrawingRow struct {
+	DrawingID        uuid.UUID
+	DrawingDoodle    json.RawMessage
+	DrawingCreatedAt time.Time
+	Username         string
+	UserAvatarPath   string
+}
+
+func (q *Queries) GetRandomUnfinishedOfflineDrawing(ctx context.Context) (GetRandomUnfinishedOfflineDrawingRow, error) {
+	row := q.db.QueryRowContext(ctx, getRandomUnfinishedOfflineDrawing)
+	var i GetRandomUnfinishedOfflineDrawingRow
+	err := row.Scan(
+		&i.DrawingID,
+		&i.DrawingDoodle,
+		&i.DrawingCreatedAt,
+		&i.Username,
+		&i.UserAvatarPath,
+	)
+	return i, err
+}
+
+const getRecentOfflineDrawings = `-- name: GetRecentOfflineDrawings :many
+SELECT 
+    d.id AS drawing_id,
+    d.doodle_strokes AS drawing_doodle,
+    d.finished_strokes AS drawing_finished,
+    d.created_at AS drawing_created_at
+FROM drawings d
+WHERE d.isOffline = true
+ORDER BY d.created_at DESC
+LIMIT $1 OFFSET $2
+`
+
+type GetRecentOfflineDrawingsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+type GetRecentOfflineDrawingsRow struct {
+	DrawingID        uuid.UUID
+	DrawingDoodle    json.RawMessage
+	DrawingFinished  json.RawMessage
+	DrawingCreatedAt time.Time
+}
+
+func (q *Queries) GetRecentOfflineDrawings(ctx context.Context, arg GetRecentOfflineDrawingsParams) ([]GetRecentOfflineDrawingsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRecentOfflineDrawings, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRecentOfflineDrawingsRow
+	for rows.Next() {
+		var i GetRecentOfflineDrawingsRow
+		if err := rows.Scan(
+			&i.DrawingID,
+			&i.DrawingDoodle,
+			&i.DrawingFinished,
+			&i.DrawingCreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getRecentOfflineDrawingsByUserID = `-- name: GetRecentOfflineDrawingsByUserID :many
+SELECT 
+    d.id AS drawing_id,
+    d.doodle_strokes AS drawing_doodle,
+    d.finished_strokes AS drawing_finished,
+    d.created_at AS drawing_created_at
+FROM drawings d
+WHERE d.isOffline = true
+  AND d.user2_id = $1
+ORDER BY d.created_at DESC, d.id DESC
+LIMIT $2 OFFSET $3
+`
+
+type GetRecentOfflineDrawingsByUserIDParams struct {
+	User2ID uuid.NullUUID
+	Limit   int32
+	Offset  int32
+}
+
+type GetRecentOfflineDrawingsByUserIDRow struct {
+	DrawingID        uuid.UUID
+	DrawingDoodle    json.RawMessage
+	DrawingFinished  json.RawMessage
+	DrawingCreatedAt time.Time
+}
+
+func (q *Queries) GetRecentOfflineDrawingsByUserID(ctx context.Context, arg GetRecentOfflineDrawingsByUserIDParams) ([]GetRecentOfflineDrawingsByUserIDRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRecentOfflineDrawingsByUserID, arg.User2ID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRecentOfflineDrawingsByUserIDRow
+	for rows.Next() {
+		var i GetRecentOfflineDrawingsByUserIDRow
+		if err := rows.Scan(
+			&i.DrawingID,
+			&i.DrawingDoodle,
+			&i.DrawingFinished,
+			&i.DrawingCreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getTotalOfflineDrawings = `-- name: GetTotalOfflineDrawings :one
 SELECT COUNT(*)
 FROM drawings
+WHERE isOffline = true
 `
 
 func (q *Queries) GetTotalOfflineDrawings(ctx context.Context) (int64, error) {
@@ -313,6 +351,7 @@ const getTotalOfflineDrawingsByUserID = `-- name: GetTotalOfflineDrawingsByUserI
 SELECT COUNT(*)
 FROM drawings
 WHERE user2_id = $1
+    AND isOffline = true
 `
 
 func (q *Queries) GetTotalOfflineDrawingsByUserID(ctx context.Context, user2ID uuid.NullUUID) (int64, error) {
@@ -336,5 +375,23 @@ type UpdateDrawingFinishedParams struct {
 
 func (q *Queries) UpdateDrawingFinished(ctx context.Context, arg UpdateDrawingFinishedParams) error {
 	_, err := q.db.ExecContext(ctx, updateDrawingFinished, arg.FinishedStrokes, arg.MatchID, arg.UserID)
+	return err
+}
+
+const updateOfflineDrawingUser = `-- name: UpdateOfflineDrawingUser :exec
+UPDATE drawings
+SET user2_id = $1,
+    finished_strokes = $2
+WHERE id = $3
+`
+
+type UpdateOfflineDrawingUserParams struct {
+	User2ID         uuid.NullUUID
+	FinishedStrokes json.RawMessage
+	ID              uuid.UUID
+}
+
+func (q *Queries) UpdateOfflineDrawingUser(ctx context.Context, arg UpdateOfflineDrawingUserParams) error {
+	_, err := q.db.ExecContext(ctx, updateOfflineDrawingUser, arg.User2ID, arg.FinishedStrokes, arg.ID)
 	return err
 }

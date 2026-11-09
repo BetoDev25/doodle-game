@@ -26,7 +26,10 @@ func HandlerDeleteMatchByID(w http.ResponseWriter, r *http.Request, db *database
 		return
 	}
 
-	if err := db.DeleteDrawingByMatchID(r.Context(), matchID); err != nil {
+	if err := db.DeleteDrawingByMatchID(r.Context(), uuid.NullUUID{
+		UUID:  matchID,
+		Valid: true,
+	}); err != nil {
 		log.Printf("Error deleting drawings: %v", err)
 	}
 

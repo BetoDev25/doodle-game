@@ -24,7 +24,10 @@ func HandlerViewDrawings(w http.ResponseWriter, r *http.Request, db *database.Qu
 	}
 
 	// Get all drawings for this match
-	drawings, err := db.GetDrawingsByMatchID(r.Context(), matchID)
+	drawings, err := db.GetDrawingsByMatchID(r.Context(), uuid.NullUUID{
+		UUID:  matchID,
+		Valid: true,
+	})
 	if err != nil {
 		RespondWithError(w, http.StatusNotFound, "Drawings not found", err)
 		return
