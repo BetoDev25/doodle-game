@@ -11,7 +11,7 @@
     line-height: 1.6;
 }
 
-#findMatchBtn {
+.findMatchBtn {
     padding: 12px 32px;
     font-size: 18px;
     font-weight: bold;
@@ -23,12 +23,22 @@
     transition: background-color 0.2s, transform 0.2s;
 }
 
-#findMatchBtn:hover {
+.findMatchBtn:hover {
     background: #357ab8;
 }
 
-#findMatchBtn:active {
+.findMatchBtn:active {
     transform: scale(0.97);
+}
+
+
+.lobby-row {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    align-items: stretch;
+    flex-wrap: wrap;
+    padding: 40px 20px;
 }
 
 .lobby-container {
@@ -39,6 +49,19 @@
     background: white;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0,0,0,0.1);  
+}
+
+.offline-lobby-container {
+    flex: 1 1 360px;
+    max-width: 480px;
+    margin: 0;
+    padding: 60px 40px;
+    text-align: center;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
 }
 .lobby-container h1 {
     padding-bottom: 16px;
@@ -70,7 +93,7 @@
 }
 
 .sfw-notice {
-    margin-top: 20px;
+    margin: 20px 0 32px;
     font-size: 14px;
     color: #888;
     line-height: 1.4;

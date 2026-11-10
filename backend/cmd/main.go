@@ -57,6 +57,11 @@ func main() {
 		http.ServeFile(w, r, "./static/game.html")
 	}))
 
+	// Offline Game Page
+	mux.HandleFunc("/playoffline/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/offlinegame.html")
+	}))
+
 	// Devlog page
 	mux.HandleFunc("/devlog/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/devlog.html")
