@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sketch Switch - Games</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/taskbar.css">
+    <link rel="stylesheet" href="/css/profile.css">
+    <link rel="stylesheet" href="/css/game.css">
+    <link rel="stylesheet" href="/css/drawing.css">
+</head>
+<body>
+    <!-- Taskbar -->
+    <nav id="taskbar"></nav>
+
+    <div class="lobby-row">
+        <div class="offline-lobby-container">
+            <h1>Single-player</h1>
+            <p class="sfw-notice">Create a sketch, or find a random sketch and finish it!</p>
+            <button class="findMatchBtn" onclick="window.location.href='/play/offline'">Play</button>
+        </div>
+        <div class="offline-lobby-container">
+            <h1>Multiplayer</h1>
+            <p class="sfw-notice">Connect with a random player and finish each other's sketches!</p>
+            <button class="findMatchBtn" onclick="window.location.href='/play/online'">Play</button>
+        </div>
+    </div>
+
+    <script src="/js/taskbar.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/drawing.js"></script>
+    <script src="/js/offlinegame.js"></script>
+    <script src="/js/gamechoice.js"></script>
+</body>
+</html>

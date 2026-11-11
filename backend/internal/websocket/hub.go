@@ -312,6 +312,7 @@ func (h *Hub) handleDoodleComplete(client *Client, data []byte) {
 				},
 				DoodleStrokes:   strokes,
 				FinishedStrokes: json.RawMessage(`[]`), // Finished drawing is empty for now
+				Isoffline:       false,
 			})
 			if err != nil {
 				log.Printf("Error saving doodle for %s: %v", userID, err)

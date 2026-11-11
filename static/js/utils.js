@@ -200,3 +200,55 @@ function showToast(message) {
 
     toastNotification.appendChild(toast);
 }
+
+function wireOptionalDrawingControls({ saveBtnId = 'saveBtn', bgColorBtnId = 'backgroundColorBtn' } = {}) {
+    if (bgColorBtnId) {
+        const bgBtn = document.getElementById(bgColorBtnId);
+        if (bgBtn && bgBtn.dataset.wired !== 'true') {
+            bgBtn.dataset.wired = 'true';
+            bgBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (selectedColor === null) return;   // eraser active
+                backgroundColor = selectedColor;
+                repaintBackground();
+                this.style.backgroundColor = backgroundColor;
+            });
+        }
+    }
+
+    if (saveBtnId) {
+        const saveBtn = document.getElementById(saveBtnId);
+        if (saveBtn && saveBtn.dataset.wired !== 'true') {
+            saveBtn.dataset.wired = 'true';
+            saveBtn.addEventListener('click', saveAsPng);
+        }
+    }
+}
+
+function saveAsPng() {
+    const bg = document.getElementById('background-canvas');
+    const doodle = document.getElementById('doodle-canvas');
+    const draw = document.getElementById('drawing-canvas');
+    if (!bg || !doodle || !draw) return;
+
+    const out = document.createElement('canvas');
+    out.width = draw.width;
+    out.height = draw.height;
+    const octx = out.getContext('2d');
+    octx.drawImage(bg, 0, 0);
+    octx.drawImage(doodle, 0, 0);
+    octx.drawImage(draw, 0, 0);
+
+    out.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        a.href = url;
+        a.download = `drawing-${ts}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    }, 'image/png');
+}

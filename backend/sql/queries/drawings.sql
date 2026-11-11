@@ -1,6 +1,6 @@
 -- name: CreateDrawing :one
-INSERT INTO drawings (match_id, user_id, doodle_strokes, finished_strokes)
-VALUES ($1, $2, $3, $4)
+INSERT INTO drawings (match_id, user_id, doodle_strokes, finished_strokes, isOffline)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING *;
 
 -- name: DeleteDrawingByMatchID :exec

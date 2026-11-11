@@ -54,11 +54,16 @@ func main() {
 
 	// Game Page
 	mux.HandleFunc("/play/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/gamechoice.html")
+	}))
+
+	// Online Game Page
+	mux.HandleFunc("/play/online", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/game.html")
 	}))
 
 	// Offline Game Page
-	mux.HandleFunc("/playoffline/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/play/offline/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/offlinegame.html")
 	}))
 

@@ -4,44 +4,46 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/BetoDev25/doodle-game/backend/internal/cookies"
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
 	"github.com/google/uuid"
 )
 
 func HandlerCreateDrawings(w http.ResponseWriter, r *http.Request, db *database.Queries) {
-	type params struct {
-		UserID        string          `json:"user_id"`
-		IsOffline     bool            `json:"is_offline"`
-		DoodleStrokes json.RawMessage `json:"doodle_strokes"`
+	sessionToken, err := cookies.Read(r, "session_token")
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Not authenticated", err)
+		return
+	}
+	user, err := db.GetUserByCookie(r.Context(), sessionToken)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Invalid or expired session", err)
+		return
 	}
 
+	type params struct {
+		DoodleStrokes json.RawMessage `json:"doodle_strokes"`
+		IsOffline     bool            `json:"is_offline"`
+	}
 	var input params
-	err := json.NewDecoder(r.Body).Decode(&input)
-	if err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
 		RespondWithError(w, http.StatusBadRequest, "Invalid request body", err)
 		return
 	}
-
-	userUUID, err := uuid.Parse(input.UserID)
-	if err != nil {
-		RespondWithError(w, http.StatusBadRequest, "Invalid user_id", err)
-		return
-	}
-
-	matchID := uuid.NullUUID{Valid: false}
-	if !input.IsOffline {
-		RespondWithError(w, http.StatusBadRequest, "Online drawings not supported yet", nil)
+	if len(input.DoodleStrokes) == 0 {
+		RespondWithError(w, http.StatusBadRequest, "doodle_strokes is required", nil)
 		return
 	}
 
 	_, err = db.CreateDrawing(r.Context(), database.CreateDrawingParams{
-		MatchID: matchID,
+		MatchID: uuid.NullUUID{Valid: false}, // offline: no match
 		UserID: uuid.NullUUID{
-			UUID:  userUUID,
+			UUID:  user.ID,
 			Valid: true,
 		},
 		DoodleStrokes:   input.DoodleStrokes,
 		FinishedStrokes: json.RawMessage(`[]`),
+		Isoffline:       input.IsOffline,
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Couldn't create drawing", err)

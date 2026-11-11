@@ -41,6 +41,16 @@ type Match struct {
 	Drawing2ID     uuid.NullUUID
 }
 
+type Notification struct {
+	ID          uuid.UUID
+	Type        string
+	RecipientID uuid.UUID
+	DrawingID   uuid.NullUUID
+	Body        string
+	IsRead      bool
+	CreatedAt   time.Time
+}
+
 type Report struct {
 	ID         uuid.UUID
 	ReporterID uuid.UUID

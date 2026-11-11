@@ -15,8 +15,8 @@ import (
 )
 
 const createDrawing = `-- name: CreateDrawing :one
-INSERT INTO drawings (match_id, user_id, doodle_strokes, finished_strokes)
-VALUES ($1, $2, $3, $4)
+INSERT INTO drawings (match_id, user_id, doodle_strokes, finished_strokes, isOffline)
+VALUES ($1, $2, $3, $4, $5)
 RETURNING id, match_id, user_id, doodle_strokes, finished_strokes, created_at, user2_id, isoffline
 `
 
@@ -25,6 +25,7 @@ type CreateDrawingParams struct {
 	UserID          uuid.NullUUID
 	DoodleStrokes   json.RawMessage
 	FinishedStrokes json.RawMessage
+	Isoffline       bool
 }
 
 func (q *Queries) CreateDrawing(ctx context.Context, arg CreateDrawingParams) (Drawing, error) {
@@ -33,6 +34,7 @@ func (q *Queries) CreateDrawing(ctx context.Context, arg CreateDrawingParams) (D
 		arg.UserID,
 		arg.DoodleStrokes,
 		arg.FinishedStrokes,
+		arg.Isoffline,
 	)
 	var i Drawing
 	err := row.Scan(

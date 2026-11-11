@@ -42,6 +42,7 @@ function getCanvas() {
 }
 
 function initDrawingTool() {
+    if (document.getElementById('drawing-canvas')?.dataset.toolWired === 'true') return;
     const result = getCanvas();
     canvas = result.canvas;
     ctx = result.ctx;
@@ -99,6 +100,7 @@ function initDrawingTool() {
         }
         wasDrawing = isDrawing;
     }, 100);
+    document.getElementById('drawing-canvas').dataset.toolWired = 'true';
 }
 
 // ===== Canvas sizing =====

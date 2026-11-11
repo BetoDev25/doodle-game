@@ -113,3 +113,29 @@
     width: 100%;
     margin-top: 10px;
 }
+
+.submit-sketch-btn {
+    padding: 12px 32px;
+    font-size: 18px;
+    font-weight: bold;
+    color: white;
+    background: #4A90D9;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.submit-sketch-btn:hover {
+    background: #357ab8;
+}
+
+.submit-sketch-btn:active {
+    transform: scale(0.97);
+}
+
+.submit-sketch-btn:disabled {
+    background: #9bbfe0;
+    cursor: not-allowed;
+    transform: none;
+}
