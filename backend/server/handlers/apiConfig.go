@@ -12,6 +12,7 @@ import (
 
 type APIConfig struct {
 	DB        *database.Queries
+	Conn      *sql.DB
 	APIKey    string
 	JWTSecret string
 }
@@ -46,6 +47,7 @@ func SetupAPIConfig(env string) *APIConfig {
 
 	apiCfg := &APIConfig{
 		DB:     dbQueries,
+		Conn:   db,
 		APIKey: os.Getenv("API_KEY"),
 	}
 

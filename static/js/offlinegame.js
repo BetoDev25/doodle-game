@@ -16,7 +16,7 @@ function showLobbyScreen() {
 `;
 
     document.getElementById('createSketchBtn').addEventListener('click', createSketch);
-    document.getElementById('findSketchBtn').addEventListener('click', findSketch);
+    document.getElementById('findSketchBtn').addEventListener('click', finishSketch);
 }
 
 showLobbyScreen();
@@ -26,11 +26,28 @@ function createSketch() {
     showOfflineDrawingScreen({ mode: 'sketch' });
 }
 
-function showOfflineDrawingScreen({ mode }) {
+async function finishSketch() {
+    let drawing;
+    try {
+        const res = await fetch('/api/offlineDrawing', { credentials: 'same-origin' });
+        if (!res.ok) {
+            showToast('No sketches available right now. Try again later!');
+            return;
+        }
+        drawing = await res.json();
+    } catch (err) {
+        showToast('Could not fetch a sketch.');
+        return;
+    }
+
+    showOfflineDrawingScreen({ mode: 'finish', drawing });
+}
+
+function showOfflineDrawingScreen({ mode, drawing = null }) {
     document.getElementById('game-screen').innerHTML = `
         <div class="game-container">
             <div class="drawing-header">
-                <div id="phaseDisplay">${mode === 'sketch' ? 'Draw something!' : 'Complete the drawing!'}</div>
+                <div id="phaseDisplay">${mode === 'sketch' ? 'Draw something!' : 'Complete the sketch!'}</div>
             </div>
             <div class="container">
                 <section class="controls-board">
@@ -106,7 +123,25 @@ function showOfflineDrawingScreen({ mode }) {
 
     initDrawingTool();
     wireOptionalDrawingControls();   // wires #backgroundColorBtn + #saveBtn
-    document.getElementById('readyBtn').addEventListener('click', submitSketch);
+
+    if (mode === 'finish' && drawing) {
+        const doodleCanvas = document.getElementById('doodle-canvas');
+        renderDoodleStrokes(
+            doodleCanvas.getContext('2d'),
+            drawing.doodle_strokes,
+            doodleCanvas.width,
+            doodleCanvas.height
+        );
+    }
+
+    const readyBtn= document.getElementById('readyBtn');
+    if (mode === 'sketch') {
+        readyBtn.textContent = 'Submit sketch';
+        readyBtn.addEventListener('click', submitSketch);
+    } else {
+        readyBtn.textContent = 'Submit drawing';
+        readyBtn.addEventListener('click', () => submitFinishedDrawing(drawing.id));
+    }
 }
 
 async function submitSketch() {
@@ -146,6 +181,50 @@ async function submitSketch() {
         window.location.href = '/play/offline/';
     } catch (err) {
         showToast('Sketch could not be submitted.');
+        if (readyBtn) readyBtn.disabled = false;
+    }
+}
+
+async function submitFinishedDrawing(drawingId) {
+    if (isDrawingLayerEmpty()) {
+        showToast('You haven\'t added anything yet — finish the drawing first!');
+        return;
+    }
+
+    if (!confirm('Are you sure you want to submit your finished drawing? You won\'t be able to edit it afterward.')) return;
+
+    const readyBtn = document.getElementById('readyBtn');
+    if (readyBtn) readyBtn.disabled = true;
+
+    try {
+        const res = await fetch(`/api/offlineDrawing/${drawingId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                finished_strokes: getStrokes(),
+            }),
+        });
+
+        if (!res.ok) {
+            let msg = 'Drawing could not be submitted.';
+            if (res.status === 409) {
+                msg = 'Someone else already finished this sketch. Try another one!';
+            } else {
+                try {
+                    const data = await res.json();
+                    if (data && data.error) msg = data.error;
+                } catch (_) {}
+            }
+            showToast(msg);
+            if (readyBtn) readyBtn.disabled = false;
+            return;
+        }
+
+        sessionStorage.setItem('justFinishedDrawing', 'true');
+        window.location.href = '/play/offline/';
+    } catch (err) {
+        showToast('Drawing could not be submitted.');
         if (readyBtn) readyBtn.disabled = false;
     }
 }

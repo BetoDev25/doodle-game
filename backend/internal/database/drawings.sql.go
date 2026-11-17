@@ -380,11 +380,11 @@ func (q *Queries) UpdateDrawingFinished(ctx context.Context, arg UpdateDrawingFi
 	return err
 }
 
-const updateOfflineDrawingUser = `-- name: UpdateOfflineDrawingUser :exec
+const updateOfflineDrawingUser = `-- name: UpdateOfflineDrawingUser :execrows
 UPDATE drawings
 SET user2_id = $1,
     finished_strokes = $2
-WHERE id = $3
+WHERE id = $3 AND user2_id IS NULL
 `
 
 type UpdateOfflineDrawingUserParams struct {
@@ -393,7 +393,10 @@ type UpdateOfflineDrawingUserParams struct {
 	ID              uuid.UUID
 }
 
-func (q *Queries) UpdateOfflineDrawingUser(ctx context.Context, arg UpdateOfflineDrawingUserParams) error {
-	_, err := q.db.ExecContext(ctx, updateOfflineDrawingUser, arg.User2ID, arg.FinishedStrokes, arg.ID)
-	return err
+func (q *Queries) UpdateOfflineDrawingUser(ctx context.Context, arg UpdateOfflineDrawingUserParams) (int64, error) {
+	result, err := q.db.ExecContext(ctx, updateOfflineDrawingUser, arg.User2ID, arg.FinishedStrokes, arg.ID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected()
 }

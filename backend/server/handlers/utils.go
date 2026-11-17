@@ -123,3 +123,15 @@ func GetClientIP(r *http.Request) string {
 	ip := strings.Split(r.RemoteAddr, ":")[0]
 	return ip
 }
+
+func GenerateNotificationBody(notifType string, username string) (string, error) {
+	var body string
+	switch notifType {
+	case "drawing_finished":
+		body = fmt.Sprintf("%s just finished your sketch! Come check it out!", username)
+		break
+	default:
+		return "", fmt.Errorf("Notification type not recognized")
+	}
+	return body, nil
+}

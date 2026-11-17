@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func HandlerUpdateOfflineDrawing(w http.ResponseWriter, r *http.Request, db *database.Queries) {
+func HandlerUpdateOfflineDrawing(w http.ResponseWriter, r *http.Request, db *database.Queries, conn *sql.DB) {
 	idStr := r.PathValue("id")
 	drawingID, err := uuid.Parse(idStr)
 	if err != nil {
@@ -23,12 +24,13 @@ func HandlerUpdateOfflineDrawing(w http.ResponseWriter, r *http.Request, db *dat
 		RespondWithError(w, http.StatusUnauthorized, "Not authenticated", err)
 		return
 	}
-	user, err := db.GetUserByCookie(r.Context(), sessionToken)
+	actor, err := db.GetUserByCookie(r.Context(), sessionToken)
 	if err != nil {
 		RespondWithError(w, http.StatusUnauthorized, "Invalid or expired session", err)
 		return
 	}
 
+	// The only client-supplied data
 	type params struct {
 		FinishedStrokes json.RawMessage `json:"finished_strokes"`
 	}
@@ -42,9 +44,20 @@ func HandlerUpdateOfflineDrawing(w http.ResponseWriter, r *http.Request, db *dat
 		return
 	}
 
-	err = db.UpdateOfflineDrawingUser(r.Context(), database.UpdateOfflineDrawingUserParams{
+	// One transaction: finish + notify, atomically.
+	tx, err := conn.BeginTx(r.Context(), nil)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Couldn't start transaction", err)
+		return
+	}
+	defer tx.Rollback()
+
+	qtx := db.WithTx(tx)
+
+	// 1. Claim + finish (guarded — only succeeds if still unclaimed)
+	rows, err := qtx.UpdateOfflineDrawingUser(r.Context(), database.UpdateOfflineDrawingUserParams{
 		User2ID: uuid.NullUUID{
-			UUID:  user.ID,
+			UUID:  actor.ID,
 			Valid: true,
 		},
 		FinishedStrokes: input.FinishedStrokes,
@@ -52,6 +65,39 @@ func HandlerUpdateOfflineDrawing(w http.ResponseWriter, r *http.Request, db *dat
 	})
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Couldn't update drawing", err)
+		return
+	}
+	if rows == 0 {
+		RespondWithError(w, http.StatusConflict, "Drawing already finished or not available", nil)
+		return
+	}
+
+	// 2. Look up the drawing to find the recipient (the doodler)
+	drawing, err := qtx.GetOfflineDrawingByID(r.Context(), drawingID)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Couldn't load drawing", err)
+		return
+	}
+
+	// 3. Create the notification — all values server-derived
+	body, err := GenerateNotificationBody("drawing_finished", actor.Username)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Couldn't create notification", err)
+		return
+	}
+	_, err = qtx.CreateNotification(r.Context(), database.CreateNotificationParams{
+		Type:        "drawing_finished",
+		RecipientID: drawing.DrawingUser1ID.UUID, // the doodler (user_id)
+		DrawingID:   uuid.NullUUID{UUID: drawingID, Valid: true},
+		Body:        body,
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Couldn't create notification", err)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Couldn't commit", err)
 		return
 	}
 

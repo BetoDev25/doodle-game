@@ -3,4 +3,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         sessionStorage.setItem('justFinishedSketch', 'false');
         showToast('Sketch successfully submitted!');
     }
+    if (sessionStorage.getItem('justFinishedDrawing') === 'true') {
+        sessionStorage.setItem('justFinishedDrawing', 'false');
+        showToast('You finished someone\'s drawing!');
+    }
 });

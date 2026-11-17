@@ -1,6 +1,8 @@
 // ===== Taskbar =====
 window.currentUser = null;
 let currentUserPromise = null;
+let notificationsCache = [];
+let unreadCount = 0;
 
 function renderTaskbar() {
     const isGuest = window.currentUser?.isGuest ?? true;
@@ -29,6 +31,18 @@ function renderTaskbar() {
                     <a href="/profile/${window.currentUser.username}/matches/1" id="taskbarUsername" style="color:white; text-decoration:none; font-size:14px;">
                         ${username ? `${username}` : ''}
                     </a>
+                    <!-- Notification Bell-->
+                    <div class="notif-wrapper">
+                        <button id="notifBell" class="notif-bell" title="Notifications">
+                            🔔<span id="notifCount" class="notif-count" style="display:none;">0</span>
+                        </button>
+                        <div id="notifDropdown" class="notif-dropdown" style="display:none;">
+                            <div id="notifList" class="notif-list">
+                                <p class="notif-empty">No notifications for now</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <button id="authBtn" class="taskbar-btn taskbar-btn-logout">
                         Logout
                     </button>
@@ -39,6 +53,7 @@ function renderTaskbar() {
 
     // Render avatar for logged-in users
     if (!isGuest) {
+        wireNotificationBell();
         const avatarImg = document.getElementById('taskbar-avatar-img');
         if (window.currentUser?.avatar_path) {
             avatarImg.src = window.currentUser.avatar_path + '?t=' + Date.now();
@@ -111,7 +126,6 @@ async function getCurrentUser() {
                 };
                 // Store the actual username from the server
                 localStorage.setItem('guestUsername', user.username);
-                renderTaskbar();
                 return window.currentUser;
             }
 
@@ -144,7 +158,6 @@ async function getCurrentUser() {
                     isGuest: true,
                     avatar_path: guest.avatar_path || '/avatars/default.png',
                 };
-                renderTaskbar();
                 return window.currentUser;
             }
 
@@ -153,7 +166,6 @@ async function getCurrentUser() {
                 isGuest: true,
                 id: null,
             };
-            renderTaskbar();
             return window.currentUser;
         } finally {
             currentUserPromise = null;
@@ -163,8 +175,80 @@ async function getCurrentUser() {
     return currentUserPromise;
 }
 
+function wireNotificationBell() {
+    const bell = document.getElementById('notifBell');
+    const dropdown = document.getElementById('notifDropdown');
+    if (!bell || !dropdown) return;
+
+    bell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = dropdown.style.display === 'block';
+        dropdown.style.display = isOpen ? 'none' : 'block';
+        if (!isOpen) renderNotifications();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!dropdown.contains(e.target) && !bell.contains(e.target)) {
+            dropdown.style.display = 'none';
+        }
+    });
+}
+
+function renderNotifications() {
+    const list = document.getElementById('notifList');
+    if (!list) return;
+
+    if (notificationsCache.length === 0) {
+        list.innerHTML = `<p class="notif-empty">No notifications for now</p>`;
+        return;
+    }
+
+    list.innerHTML = notificationsCache.map(n => `
+        <a class="notif-item ${n.is_read ? 'read' : 'unread'}" href="${n.link || '#'}">
+            <div class="notif-body">${n.body}</div>
+            <div class="notif-time">${formatNotifTime(n.created_at)}</div>
+        </a>
+    `).join('');
+}
+
+function formatNotifTime(ts) {
+    const d = new Date(ts);
+    const diffMs = Date.now() - d.getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    return `${days}d ago`;
+}
+
+async function fetchNotifications() {
+    try {
+        const res = await fetch('/api/notifications', { credentials: 'same-origin' });
+        if (!res.ok) return;                      // 401 for guests — just skip
+        const data = await res.json();
+        notificationsCache = data.notifications || [];
+        unreadCount = data.unread_count || 0;
+        updateNotifCount();
+        if (document.getElementById('notifDropdown')?.style.display === 'block') {
+            renderNotifications();
+        }
+    } catch (_) { /* network failure — leave cache as-is */ }
+}
+
+function updateNotifCount() {
+    const el = document.getElementById('notifCount');
+    if (!el) return;
+    el.textContent = unreadCount;
+    el.style.display = unreadCount > 0 ? '' : 'none';
+}
+
 // Call on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await getCurrentUser();
     renderTaskbar();
+    if (window.currentUser && !window.currentUser.isGuest) {
+        await fetchNotifications();
+    }
 });

@@ -24,11 +24,11 @@ LIMIT 20 OFFSET $2;
 
 
 
--- name: UpdateOfflineDrawingUser :exec
+-- name: UpdateOfflineDrawingUser :execrows
 UPDATE drawings
 SET user2_id = $1,
     finished_strokes = $2
-WHERE id = $3;
+WHERE id = $3 AND user2_id IS NULL;
 
 -- name: GetRandomUnfinishedOfflineDrawing :one
 SELECT 

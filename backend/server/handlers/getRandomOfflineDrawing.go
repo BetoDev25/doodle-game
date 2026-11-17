@@ -9,7 +9,7 @@ import (
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
 )
 
-func HandlerGetRandomDrawing(w http.ResponseWriter, r *http.Request, db *database.Queries) {
+func HandlerGetRandomOfflineDrawing(w http.ResponseWriter, r *http.Request, db *database.Queries) {
 	drawing, err := db.GetRandomUnfinishedOfflineDrawing(r.Context())
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

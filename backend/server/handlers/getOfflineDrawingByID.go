@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func HandlerGetRandomDrawingByID(w http.ResponseWriter, r *http.Request, db *database.Queries) {
+func HandlerGetOfflineDrawingByID(w http.ResponseWriter, r *http.Request, db *database.Queries) {
 	idStr := r.PathValue("id")
 	drawingID, err := uuid.Parse(idStr)
 	if err != nil {

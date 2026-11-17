@@ -22,7 +22,8 @@ func main() {
 	mux, server := config.SetupServer(*env)
 	cfg := config.SetupConfig(*env)
 	db := apiCfg.DB
-	if db == nil {
+	conn := apiCfg.Conn
+	if db == nil || conn == nil {
 		log.Fatal("Database connection is nil")
 	}
 	log.Println("Database connection established successfully")
@@ -181,13 +182,16 @@ func main() {
 		handlers.HandlerCreateDrawings(w, r, db)
 	}))
 	mux.HandleFunc("GET /api/offlineDrawing", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerGetRandomDrawing(w, r, db)
+		handlers.HandlerGetRandomOfflineDrawing(w, r, db)
 	}))
 	mux.HandleFunc("GET /api/offlineDrawing/{id}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerGetRandomDrawingByID(w, r, db)
+		handlers.HandlerGetOfflineDrawingByID(w, r, db)
 	}))
 	mux.HandleFunc("PATCH /api/offlineDrawing/{id}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerUpdateOfflineDrawing(w, r, db)
+		handlers.HandlerUpdateOfflineDrawing(w, r, db, conn)
+	}))
+	mux.HandleFunc("GET /api/notifications", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerGetNotificationsByUser(w, r, db, cfg)
 	}))
 	mux.HandleFunc("POST /api/guests", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerCreateGuest(w, r, db, cfg)
