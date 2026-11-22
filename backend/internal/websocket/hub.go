@@ -16,6 +16,8 @@ type Hub struct {
 
 	Rooms map[string][]*Client
 
+	UserClients map[string][]*Client
+
 	Queue []*Client
 
 	MatchStates map[string]*MatchState // matchID -> state
@@ -45,6 +47,7 @@ func NewHub(db *database.Queries) *Hub {
 	return &Hub{
 		Clients:     make(map[*Client]bool),
 		Rooms:       make(map[string][]*Client),
+		UserClients: make(map[string][]*Client),
 		Queue:       []*Client{},
 		Register:    make(chan *Client),
 		Unregister:  make(chan *Client),
@@ -60,6 +63,7 @@ func (h *Hub) Run() {
 		case client := <-h.Register:
 			h.Mu.Lock()
 			h.Clients[client] = true
+			h.UserClients[client.UserID] = append(h.UserClients[client.UserID], client)
 			h.Mu.Unlock()
 			log.Printf("Client registered: %s (%s)", client.Username, client.UserID)
 
@@ -68,6 +72,20 @@ func (h *Hub) Run() {
 			if _, ok := h.Clients[client]; ok {
 				delete(h.Clients, client)
 				close(client.Send)
+
+				if conns, ok := h.UserClients[client.UserID]; ok {
+					filtered := conns[:0]
+					for _, c := range conns {
+						if c != client {
+							filtered = append(filtered, c)
+						}
+					}
+					if len(filtered) == 0 {
+						delete(h.UserClients, client.UserID)
+					} else {
+						h.UserClients[client.UserID] = filtered
+					}
+				}
 
 				h.removeFromQueue(client)
 
@@ -82,6 +100,20 @@ func (h *Hub) Run() {
 				log.Printf("Client unregistered: %s (%s)", client.Username, client.UserID)
 			}
 			h.Mu.Unlock()
+		}
+	}
+}
+
+func (h *Hub) NotifyUser(userID string, payload []byte) {
+	h.Mu.Lock()
+	conns := append([]*Client(nil), h.UserClients[userID]...) // copy under lock
+	h.Mu.Unlock()
+
+	for _, c := range conns {
+		select {
+		case c.Send <- payload:
+		default:
+			log.Printf("NotifyUser: send channel full for user %s", userID)
 		}
 	}
 }

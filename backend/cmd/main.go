@@ -1,3 +1,4 @@
+//go:debug httpmuxgo121=0
 package main
 
 import (
@@ -141,6 +142,22 @@ func main() {
 		http.ServeFile(w, r, "./static/match.html")
 	}))
 
+	// View single sketch
+	mux.HandleFunc("/sketch/{id}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		sketchID, err := uuid.Parse(r.PathValue("id"))
+		if err != nil {
+			http.Redirect(w, r, "/error?message="+url.QueryEscape("Invalid sketch ID"), http.StatusSeeOther)
+			return
+		}
+
+		if _, err := db.GetOfflineDrawingByID(r.Context(), sketchID); err != nil {
+			http.Redirect(w, r, "/error?message="+url.QueryEscape("Sketch does not exist or was deleted"), http.StatusSeeOther)
+			return
+		}
+
+		http.ServeFile(w, r, "./static/sketch.html")
+	}))
+
 	mux.HandleFunc("/profile", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/profile.html")
 	}))
@@ -188,10 +205,13 @@ func main() {
 		handlers.HandlerGetOfflineDrawingByID(w, r, db)
 	}))
 	mux.HandleFunc("PATCH /api/offlineDrawing/{id}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandlerUpdateOfflineDrawing(w, r, db, conn)
+		handlers.HandlerUpdateOfflineDrawing(w, r, db, conn, hub)
 	}))
 	mux.HandleFunc("GET /api/notifications", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerGetNotificationsByUser(w, r, db, cfg)
+	}))
+	mux.HandleFunc("PATCH /api/notifications", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandlerMarkNotificationsRead(w, r, db, cfg)
 	}))
 	mux.HandleFunc("POST /api/guests", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandlerCreateGuest(w, r, db, cfg)

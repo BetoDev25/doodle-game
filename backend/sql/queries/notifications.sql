@@ -8,3 +8,8 @@ SELECT *
 FROM notifications
 WHERE recipient_id = $1
 ORDER BY created_at DESC;
+
+-- name: MarkNotificationsRead :exec
+UPDATE notifications
+SET is_read = true
+WHERE recipient_id = $1 AND is_read = false;

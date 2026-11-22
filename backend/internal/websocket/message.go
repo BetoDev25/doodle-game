@@ -69,6 +69,15 @@ func createMatchFoundMessage(matchID, role string) []byte {
 	return result
 }
 
+func CreateNotificationMessage(payload []byte) []byte {
+	msg := Message{
+		Type: "notification",
+		Data: payload,
+	}
+	b, _ := json.Marshal(msg)
+	return b
+}
+
 func createReceiveDoodleMessage(strokes json.RawMessage, timeLeft int) []byte {
 	msg := Message{
 		Type: "receive_doodle",

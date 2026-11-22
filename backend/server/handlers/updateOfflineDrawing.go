@@ -7,10 +7,11 @@ import (
 
 	"github.com/BetoDev25/doodle-game/backend/internal/cookies"
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
+	"github.com/BetoDev25/doodle-game/backend/internal/websocket"
 	"github.com/google/uuid"
 )
 
-func HandlerUpdateOfflineDrawing(w http.ResponseWriter, r *http.Request, db *database.Queries, conn *sql.DB) {
+func HandlerUpdateOfflineDrawing(w http.ResponseWriter, r *http.Request, db *database.Queries, conn *sql.DB, hub *websocket.Hub) {
 	idStr := r.PathValue("id")
 	drawingID, err := uuid.Parse(idStr)
 	if err != nil {
@@ -85,7 +86,7 @@ func HandlerUpdateOfflineDrawing(w http.ResponseWriter, r *http.Request, db *dat
 		RespondWithError(w, http.StatusInternalServerError, "Couldn't create notification", err)
 		return
 	}
-	_, err = qtx.CreateNotification(r.Context(), database.CreateNotificationParams{
+	notificationRow, err := qtx.CreateNotification(r.Context(), database.CreateNotificationParams{
 		Type:        "drawing_finished",
 		RecipientID: drawing.DrawingUser1ID.UUID, // the doodler (user_id)
 		DrawingID:   uuid.NullUUID{UUID: drawingID, Valid: true},
@@ -99,6 +100,26 @@ func HandlerUpdateOfflineDrawing(w http.ResponseWriter, r *http.Request, db *dat
 	if err := tx.Commit(); err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Couldn't commit", err)
 		return
+	}
+
+	if hub != nil {
+		var drawingIDPtr *uuid.UUID
+		if notificationRow.DrawingID.Valid {
+			id := notificationRow.DrawingID.UUID
+			drawingIDPtr = &id
+		}
+		resp := NotificationResponse{
+			ID:          notificationRow.ID,
+			Type:        notificationRow.Type,
+			RecipientID: notificationRow.RecipientID,
+			DrawingID:   drawingIDPtr,
+			Body:        notificationRow.Body,
+			IsRead:      notificationRow.IsRead,
+			CreatedAt:   notificationRow.CreatedAt,
+		}
+		if payload, err := json.Marshal(resp); err == nil {
+			hub.NotifyUser(drawing.DrawingUser1ID.UUID.String(), websocket.CreateNotificationMessage(payload))
+		}
 	}
 
 	RespondWithJSON(w, http.StatusOK, map[string]string{

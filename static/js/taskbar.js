@@ -2,6 +2,8 @@
 window.currentUser = null;
 let currentUserPromise = null;
 let notificationsCache = [];
+let taskbarSocket = null;
+let taskbarReconnectTimer = null;
 let unreadCount = 0;
 
 function renderTaskbar() {
@@ -184,7 +186,10 @@ function wireNotificationBell() {
         e.stopPropagation();
         const isOpen = dropdown.style.display === 'block';
         dropdown.style.display = isOpen ? 'none' : 'block';
-        if (!isOpen) renderNotifications();
+        if (!isOpen) {
+            renderNotifications();
+            markNotificationsRead();
+        }
     });
 
     document.addEventListener('click', (e) => {
@@ -204,7 +209,9 @@ function renderNotifications() {
     }
 
     list.innerHTML = notificationsCache.map(n => `
-        <a class="notif-item ${n.is_read ? 'read' : 'unread'}" href="${n.link || '#'}">
+        <a class="notif-item ${n.is_read ? 'read' : 'unread'}"
+        href="${n.drawing_id ? '/sketch/' + n.drawing_id : '#'}"
+        ${n.drawing_id ? 'target="_blank" rel="noopener noreferrer"' : ''}>
             <div class="notif-body">${n.body}</div>
             <div class="notif-time">${formatNotifTime(n.created_at)}</div>
         </a>
@@ -244,11 +251,74 @@ function updateNotifCount() {
     el.style.display = unreadCount > 0 ? '' : 'none';
 }
 
+async function markNotificationsRead() {
+    if (unreadCount === 0) return;   // nothing to persist — skip the DB call
+
+    notificationsCache = notificationsCache.map(n => ({ ...n, is_read: true }));
+    unreadCount = 0;
+    updateNotifCount();
+    if (document.getElementById('notifDropdown')?.style.display === 'block') {
+        renderNotifications();
+    }
+
+    try {
+        await fetch('/api/notifications', {
+            method: 'PATCH',
+            credentials: 'same-origin',
+        });
+    } catch (_) { }
+}
+
+function connectTaskbarSocket() {
+    if (!window.currentUser || window.currentUser.isGuest) return;
+    if (taskbarSocket && taskbarSocket.readyState === WebSocket.OPEN) return;
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    taskbarSocket = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+    taskbarSocket.onopen = () => {
+        // Reconcile on every (re)connect — catches pushes missed while disconnected
+        fetchNotifications();
+    };
+
+    taskbarSocket.onmessage = (event) => {
+        let msg;
+        try { msg = JSON.parse(event.data); } catch { return; }
+        if (msg.type === 'notification') handleIncomingNotification(msg.data);
+    };
+
+    taskbarSocket.onclose = () => {
+        taskbarSocket = null;
+        // Reconnect with a small backoff (only if still logged in)
+        if (window.currentUser && !window.currentUser.isGuest) {
+            clearTimeout(taskbarReconnectTimer);
+            taskbarReconnectTimer = setTimeout(connectTaskbarSocket, 3000);
+        }
+    };
+
+    taskbarSocket.onerror = () => {
+        // onclose will fire too; nothing extra needed
+    };
+}
+
+function handleIncomingNotification(n) {
+    if (!n || !n.id) return;
+    if (notificationsCache.some(x => x.id === n.id)) return;   // dedupe (fetch+push race)
+
+    notificationsCache.unshift(n);
+    if (!n.is_read) unreadCount++;
+    updateNotifCount();
+    if (document.getElementById('notifDropdown')?.style.display === 'block') {
+        renderNotifications();
+    }
+}
+
 // Call on page load
 document.addEventListener('DOMContentLoaded', async () => {
     await getCurrentUser();
     renderTaskbar();
     if (window.currentUser && !window.currentUser.isGuest) {
         await fetchNotifications();
+        connectTaskbarSocket();
     }
 });
