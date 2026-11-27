@@ -42,6 +42,7 @@ LEFT JOIN users u ON u.id = d.user_id
 WHERE d.isOffline = true
   AND d.finished_strokes = '[]'::jsonb
   AND d.user2_id IS NULL
+  AND d.user_id IS DISTINCT FROM $1
 ORDER BY random()
 LIMIT 1;
 

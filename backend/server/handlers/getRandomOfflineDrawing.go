@@ -6,11 +6,25 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/BetoDev25/doodle-game/backend/internal/cookies"
 	"github.com/BetoDev25/doodle-game/backend/internal/database"
+	"github.com/google/uuid"
 )
 
 func HandlerGetRandomOfflineDrawing(w http.ResponseWriter, r *http.Request, db *database.Queries) {
-	drawing, err := db.GetRandomUnfinishedOfflineDrawing(r.Context())
+	sessionToken, err := cookies.Read(r, "session_token")
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Not authenticated", err)
+		return
+	}
+
+	user, err := db.GetUserByCookie(r.Context(), sessionToken)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "Invalid or expired session", err)
+		return
+	}
+
+	drawing, err := db.GetRandomUnfinishedOfflineDrawing(r.Context(), uuid.NullUUID{UUID: user.ID, Valid: true})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			RespondWithError(w, http.StatusNotFound, "No unfinished drawings available", nil)

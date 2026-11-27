@@ -54,6 +54,11 @@ func main() {
 		http.ServeFile(w, r, "./static/matches.html")
 	}))
 
+	// Offline Drawings page
+	mux.HandleFunc("/sketches/{page}", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/sketches.html")
+	}))
+
 	// Game Page
 	mux.HandleFunc("/play/", handlers.Middleware(cfg, db, func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "./static/gamechoice.html")

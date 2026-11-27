@@ -222,7 +222,7 @@ async function submitFinishedDrawing(drawingId) {
         }
 
         sessionStorage.setItem('justFinishedDrawing', 'true');
-        window.location.href = '/play/offline/';
+        window.location.href = `/sketch/${drawingId}`;
     } catch (err) {
         showToast('Drawing could not be submitted.');
         if (readyBtn) readyBtn.disabled = false;

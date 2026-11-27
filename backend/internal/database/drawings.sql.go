@@ -205,6 +205,7 @@ LEFT JOIN users u ON u.id = d.user_id
 WHERE d.isOffline = true
   AND d.finished_strokes = '[]'::jsonb
   AND d.user2_id IS NULL
+  AND d.user_id IS DISTINCT FROM $1
 ORDER BY random()
 LIMIT 1
 `
@@ -217,8 +218,8 @@ type GetRandomUnfinishedOfflineDrawingRow struct {
 	UserAvatarPath   string
 }
 
-func (q *Queries) GetRandomUnfinishedOfflineDrawing(ctx context.Context) (GetRandomUnfinishedOfflineDrawingRow, error) {
-	row := q.db.QueryRowContext(ctx, getRandomUnfinishedOfflineDrawing)
+func (q *Queries) GetRandomUnfinishedOfflineDrawing(ctx context.Context, userID uuid.NullUUID) (GetRandomUnfinishedOfflineDrawingRow, error) {
+	row := q.db.QueryRowContext(ctx, getRandomUnfinishedOfflineDrawing, userID)
 	var i GetRandomUnfinishedOfflineDrawingRow
 	err := row.Scan(
 		&i.DrawingID,

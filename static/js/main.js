@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadFavorites();
 
     const data = await getRecentMatches(1);
+    const offlineData = await getRecentSketches(1);
     if (data) {
         // Only show first 10 matches
         const firstEight = data.matches ? data.matches.slice(0, 10) : [];
@@ -18,9 +19,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             ...data,
             matches: firstEight
         };
-        renderDrawings(trimmedData, 'Recent Matches');
+        renderDrawings(trimmedData);
+    }
+    if (offlineData) {
+        // Only show first 10 sketches
+        const firstTen = offlineData.drawings ? offlineData.drawings.slice(0, 10) : [];
+        const trimmedData = {
+            ...offlineData,
+            drawings: firstTen
+        };
+        renderOfflineDrawings(trimmedData);
     }
 });
+
+async function getRecentSketches(page) {
+    const response = await fetch(`/api/offlineDrawings/${page}`);
+    if (!response.ok) {
+        return null;
+    }
+    const data = await response.json();
+
+    if (page > data.total_pages && data.total_pages > 0) {
+        window.location.href = `/?page=${data.total_pages}`;
+    }
+    return data;
+}
 
 async function getRecentMatches(page) {
     const response = await fetch(`/api/matches/${page}`);
@@ -37,8 +60,66 @@ async function getRecentMatches(page) {
     return data;
 }
 
+function renderOfflineDrawings(data) {
+    const grid = document.getElementById('offline-drawings-grid');
+    if (!grid) {
+        return;
+    }
+
+    const items = data.drawings || [];
+
+    if (items.length === 0) {
+        grid.innerHTML = `<p>No sketches yet.</p>`;
+        return;
+    }
+
+    let html = `<div class="drawings-grid-container">`;
+    items.forEach(item => {
+        let dateStr = formatTimeAgo(item.DrawingCreatedAt);
+
+        html += `
+            <div class="drawing-card" data-match-id="${item.DrawingID}">
+                <div class="drawing-canvas-stack thumbnail-stack">
+                    <canvas class="layer-canvas thumbnail-background" width="200" height="150"></canvas>
+                    <canvas class="layer-canvas thumbnail-doodle"     width="200" height="150"></canvas>
+                    <canvas class="layer-canvas thumbnail-drawing"    width="200" height="150"></canvas>
+                </div>
+                <p class="drawing-date">${dateStr}</p>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+
+    grid.innerHTML = html;
+
+    // Render thumbnails
+    grid.querySelectorAll('.drawing-card').forEach((card, index) => {
+        const item = items[index];
+        const W = 200;
+        const H = 150;
+
+        const bgCtx     = card.querySelector('.thumbnail-background').getContext('2d');
+        const doodleCtx = card.querySelector('.thumbnail-doodle').getContext('2d');
+        const drawCtx   = card.querySelector('.thumbnail-drawing').getContext('2d');
+
+        // Background
+        bgCtx.globalCompositeOperation = 'source-over';
+        bgCtx.fillStyle = '#ffffff';
+        bgCtx.fillRect(0, 0, W, H);
+
+        // Only 1 drawing
+        renderDoodleStrokes(doodleCtx, item.DrawingDoodle, W, H);
+        renderDrawingStrokes(drawCtx, item.DrawingFinished, W, H);
+
+        card.addEventListener('click', () => {
+            window.location.href = `/sketch/${item.DrawingID}`;
+        });
+    });
+}
+
 // Override renderDrawings to use time ago format and no pagination
-function renderDrawings(data, title) {
+function renderDrawings(data) {
     const grid = document.getElementById('drawings-grid');
     if (!grid) {
         return;
@@ -47,7 +128,7 @@ function renderDrawings(data, title) {
     const items = data.matches || [];
 
     if (items.length === 0) {
-        grid.innerHTML = `<h2>${title}</h2><p>No matches yet.</p>`;
+        grid.innerHTML = `<p>No matches yet.</p>`;
         return;
     }
 
@@ -73,7 +154,7 @@ function renderDrawings(data, title) {
     grid.innerHTML = html;
 
     // Render thumbnails
-    document.querySelectorAll('.drawing-card').forEach((card, index) => {
+    grid.querySelectorAll('.drawing-card').forEach((card, index) => {
         const item = items[index];
         const W = 200;
         const H = 150;
